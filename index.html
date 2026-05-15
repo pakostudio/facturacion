@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDI Control · Facturación</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:       #0d0d0f;
+  --surface:  #16161a;
+  --card:     #1e1e24;
+  --border:   #2a2a35;
+  --accent:   #7c5cfc;
+  --accent2:  #fc5c7d;
+  --green:    #22d3a0;
+  --yellow:   #f59e0b;
+  --red:      #ef4444;
+  --text:     #e8e8f0;
+  --muted:    #6b6b80;
+  --mono:     'DM Mono', monospace;
+  --sans:     'Sora', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem;
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+.topbar-brand { display: flex; align-items: center; gap: .75rem; }
+.topbar-logo {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: .8rem; color: #fff;
+}
+.topbar-title { font-weight: 700; font-size: 1rem; letter-spacing: -.02em; }
+.topbar-sub { font-size: .7rem; color: var(--muted); font-family: var(--mono); }
+.topbar-date { font-family: var(--mono); font-size: .75rem; color: var(--muted); }
+
+/* ── LAYOUT ── */
+.layout { display: flex; min-height: calc(100vh - 60px); }
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.5rem 0;
+  position: sticky; top: 60px; height: calc(100vh - 60px);
+  overflow-y: auto;
+}
+.nav-section { margin-bottom: 1.5rem; }
+.nav-label {
+  font-size: .65rem; font-weight: 600; letter-spacing: .1em;
+  color: var(--muted); text-transform: uppercase;
+  padding: 0 1.25rem; margin-bottom: .5rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .55rem 1.25rem;
+  cursor: pointer; font-size: .85rem; color: var(--muted);
+  transition: all .15s; border-left: 2px solid transparent;
+}
+.nav-item:hover { color: var(--text); background: rgba(124,92,252,.06); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(124,92,252,.08); }
+.nav-icon { font-size: 1rem; width: 18px; text-align: center; }
+
+/* ── MAIN ── */
+.main { flex: 1; padding: 2rem; overflow-y: auto; }
+
+/* ── VIEWS ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ── DASHBOARD STATS ── */
+.stats-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem;
+  position: relative; overflow: hidden;
+  transition: transform .2s;
+}
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.stat-card.purple::before { background: var(--accent); }
+.stat-card.green::before  { background: var(--green); }
+.stat-card.yellow::before { background: var(--yellow); }
+.stat-card.red::before    { background: var(--red); }
+.stat-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+.stat-value { font-size: 1.5rem; font-weight: 700; font-family: var(--mono); }
+.stat-value.purple { color: var(--accent); }
+.stat-value.green  { color: var(--green); }
+.stat-value.yellow { color: var(--yellow); }
+.stat-value.red    { color: var(--red); }
+.stat-sub { font-size: .7rem; color: var(--muted); margin-top: .25rem; }
+
+/* ── ALERTS ── */
+.alerts-box {
+  background: rgba(245,158,11,.07);
+  border: 1px solid rgba(245,158,11,.25);
+  border-radius: 10px; padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+.alerts-title { font-size: .75rem; font-weight: 600; color: var(--yellow); margin-bottom: .5rem; }
+.alert-item { font-size: .8rem; color: var(--text); padding: .2rem 0; }
+.alert-item span { color: var(--muted); font-family: var(--mono); }
+
+/* ── PAGE HEADER ── */
+.page-header { margin-bottom: 1.5rem; }
+.page-title { font-size: 1.4rem; font-weight: 700; letter-spacing: -.03em; }
+.page-sub { font-size: .8rem; color: var(--muted); margin-top: .2rem; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  display: flex; align-items: center; gap: .75rem;
+  margin-bottom: 1.25rem; flex-wrap: wrap;
+}
+.filter-select, .filter-input {
+  background: var(--card); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px;
+  padding: .45rem .75rem; font-size: .8rem; font-family: var(--sans);
+  outline: none;
+}
+.filter-select:focus, .filter-input:focus { border-color: var(--accent); }
+.btn {
+  padding: .45rem 1rem; border-radius: 8px; border: none;
+  font-size: .8rem; font-family: var(--sans);
+  cursor: pointer; font-weight: 600; transition: all .15s;
+  display: flex; align-items: center; gap: .4rem;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: #6a4de8; }
+.btn-outline {
+  background: transparent; color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+.btn-green { background: var(--green); color: #0d0d0f; }
+.btn-green:hover { opacity: .85; }
+
+/* ── TABLE ── */
+.table-wrap { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+thead { background: var(--surface); }
+th {
+  padding: .75rem 1rem; text-align: left;
+  font-size: .65rem; font-weight: 600; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+td {
+  padding: .7rem 1rem; border-bottom: 1px solid var(--border);
+  background: var(--card); vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #222228; }
+.mono { font-family: var(--mono); }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: .3rem;
+  padding: .2rem .6rem; border-radius: 20px;
+  font-size: .7rem; font-weight: 600; white-space: nowrap;
+}
+.badge-green  { background: rgba(34,211,160,.12); color: var(--green); }
+.badge-yellow { background: rgba(245,158,11,.12); color: var(--yellow); }
+.badge-red    { background: rgba(239,68,68,.12);  color: var(--red); }
+.badge-purple { background: rgba(124,92,252,.12); color: var(--accent); }
+.badge-gray   { background: rgba(107,107,128,.12); color: var(--muted); }
+
+/* ── UPLOAD ZONE ── */
+.upload-section { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+@media(max-width:700px){ .upload-section { grid-template-columns: 1fr; } }
+.upload-card {
+  background: var(--card); border: 2px dashed var(--border);
+  border-radius: 14px; padding: 2rem; text-align: center;
+  cursor: pointer; transition: all .2s;
+}
+.upload-card:hover, .upload-card.drag { border-color: var(--accent); background: rgba(124,92,252,.05); }
+.upload-icon { font-size: 2.5rem; margin-bottom: .75rem; }
+.upload-title { font-weight: 600; font-size: .95rem; margin-bottom: .3rem; }
+.upload-sub { font-size: .75rem; color: var(--muted); }
+.upload-input { display: none; }
+
+/* ── PREVIEW CARD ── */
+.preview-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;
+}
+.preview-title { font-size: .75rem; font-weight: 600; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em; margin-bottom: .75rem; }
+.preview-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+.preview-field { display: flex; flex-direction: column; gap: .15rem; }
+.preview-label { font-size: .65rem; color: var(--muted); }
+.preview-value { font-size: .85rem; font-family: var(--mono); }
+.match-badge {
+  display: flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .75rem; border-radius: 10px; font-weight: 700; font-size: .9rem;
+  margin-top: 1rem;
+}
+.match-ok  { background: rgba(34,211,160,.1); color: var(--green); border: 1px solid rgba(34,211,160,.2); }
+.match-err { background: rgba(239,68,68,.1);  color: var(--red);   border: 1px solid rgba(239,68,68,.2); }
+
+/* ── STATUS MODAL ── */
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(4px);
+  z-index: 200; align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.75rem;
+  width: 100%; max-width: 460px;
+  animation: slideUp .2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
+.modal-title { font-size: 1rem; font-weight: 700; }
+.modal-close { cursor: pointer; color: var(--muted); font-size: 1.2rem; background: none; border: none; color: var(--muted); }
+.modal-close:hover { color: var(--text); }
+.form-group { margin-bottom: 1rem; }
+.form-label { font-size: .75rem; color: var(--muted); margin-bottom: .35rem; display: block; }
+.form-input, .form-select {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); border-radius: 8px; padding: .55rem .75rem;
+  font-size: .85rem; font-family: var(--sans); outline: none;
+}
+.form-input:focus, .form-select:focus { border-color: var(--accent); }
+.status-options { display: flex; flex-direction: column; gap: .5rem; margin-bottom: 1rem; }
+.status-option {
+  display: flex; align-items: center; gap: .75rem;
+  padding: .75rem 1rem; border-radius: 10px;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: all .15s;
+}
+.status-option:hover { border-color: var(--accent); }
+.status-option.selected { border-color: var(--accent); background: rgba(124,92,252,.08); }
+.status-option-icon { font-size: 1.2rem; }
+.status-option-info { flex: 1; }
+.status-option-name { font-size: .85rem; font-weight: 600; }
+.status-option-desc { font-size: .7rem; color: var(--muted); }
+.extra-fields { display: none; }
+.extra-fields.show { display: block; }
+
+/* ── CLIENTS VIEW ── */
+.clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 1rem; }
+.client-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.25rem;
+  transition: transform .2s;
+}
+.client-card:hover { transform: translateY(-2px); }
+.client-name { font-weight: 700; font-size: .95rem; margin-bottom: .2rem; }
+.client-rfc { font-family: var(--mono); font-size: .75rem; color: var(--muted); margin-bottom: .75rem; }
+.client-stats { display: flex; gap: 1rem; }
+.client-stat { text-align: center; }
+.client-stat-val { font-size: 1rem; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+.client-stat-lbl { font-size: .65rem; color: var(--muted); }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── EMPTY STATE ── */
+.empty {
+  text-align: center; padding: 4rem 2rem;
+  color: var(--muted); font-size: .9rem;
+}
+.empty-icon { font-size: 3rem; margin-bottom: 1rem; opacity: .4; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 2rem; right: 2rem;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 10px; padding: .75rem 1.25rem;
+  font-size: .85rem; display: flex; align-items: center; gap: .5rem;
+  z-index: 300; transform: translateY(100px); opacity: 0;
+  transition: all .3s; box-shadow: 0 8px 32px rgba(0,0,0,.4);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">TDI</div>
+    <div>
+      <div class="topbar-title">Control de Facturación</div>
+      <div class="topbar-sub">MARKETING TDI SA DE CV · MTD220902466</div>
+    </div>
+  </div>
+  <div class="topbar-date" id="topbar-date"></div>
+</div>
+
+<div class="layout">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">General</div>
+    <div class="nav-item active" onclick="showView('dashboard')">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showView('facturas')">
+      <span class="nav-icon">🧾</span> Facturas
+    </div>
+    <div class="nav-item" onclick="showView('nueva')">
+      <span class="nav-icon">➕</span> Nueva Factura
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Administración</div>
+    <div class="nav-item" onclick="showView('clientes')">
+      <span class="nav-icon">🏢</span> Clientes
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ── DASHBOARD ── -->
+  <div id="view-dashboard" class="view active">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Resumen general de facturación</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-label">Total Facturado</div>
+        <div class="stat-value purple" id="stat-total">$0.00</div>
+        <div class="stat-sub" id="stat-count">0 facturas</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Total Cobrado</div>
+        <div class="stat-value green" id="stat-cobrado">$0.00</div>
+        <div class="stat-sub" id="stat-cobrado-count">0 facturas</div>
+      </div>
+      <div class="stat-card yellow">
+        <div class="stat-label">Pendiente de Cobro</div>
+        <div class="stat-value yellow" id="stat-pendiente">$0.00</div>
+        <div class="stat-sub" id="stat-pendiente-count">0 facturas</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Vencidas (+30 días)</div>
+        <div class="stat-value red" id="stat-vencido">$0.00</div>
+        <div class="stat-sub" id="stat-vencido-count">0 facturas</div>
+      </div>
+    </div>
+    <div class="alerts-box" id="alerts-box" style="display:none">
+      <div class="alerts-title">⚠️ Facturas próximas a vencer (5 días)</div>
+      <div id="alerts-list"></div>
+    </div>
+    <div class="page-header" style="margin-top:1.5rem">
+      <div class="page-title" style="font-size:1rem">Últimas facturas</div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Folio</th><th>Fecha</th><th>Cliente</th>
+            <th>Total</th><th>Estatus Pago</th><th>OC</th>
+          </tr>
+        </thead>
+        <tbody id="dash-table-body">
+          <tr><td colspan="6" class="empty">No hay facturas registradas</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── FACTURAS ── -->
+  <div id="view-facturas" class="view">
+    <div class="page-header">
+      <div class="page-title">Facturas</div>
+      <div class="page-sub">Control completo de facturas emitidas</div>
+    </div>
+    <div class="toolbar">
+      <input class="filter-input" type="text" placeholder="Buscar folio, cliente…" oninput="renderFacturasTable()" id="search-input">
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-cliente">
+        <option value="">Todos los clientes</option>
+      </select>
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-status">
+        <option value="">Todos los estatus</option>
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="pagado">✅ Pagado</option>
+        <option value="complemento">📄 Complemento elaborado</option>
+        <option value="vencido">❌ Vencido</option>
+      </select>
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-mes">
+        <option value="">Todos los meses</option>
+      </select>
+      <button class="btn btn-green" onclick="exportExcel()">⬇️ Exportar Excel</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Folio</th><th>UUID</th><th>Fecha</th><th>Cliente</th>
+            <th>RFC</th><th>Descripción</th><th>Subtotal</th><th>IVA</th>
+            <th>Total</th><th>OC</th><th>Estatus SAT</th>
+            <th>Estatus Pago</th><th>F. Pago</th><th>Complemento</th><th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="facturas-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── NUEVA FACTURA ── -->
+  <div id="view-nueva" class="view">
+    <div class="page-header">
+      <div class="page-title">Nueva Factura</div>
+      <div class="page-sub">Carga el PDF de la factura y opcionalmente la OC (solo La Madrileña)</div>
+    </div>
+    <div class="upload-section">
+      <div class="upload-card" id="drop-factura" onclick="document.getElementById('input-factura').click()"
+           ondragover="ev.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event,'factura')">
+        <div class="upload-icon">🧾</div>
+        <div class="upload-title">PDF de Factura</div>
+        <div class="upload-sub">Arrastra o haz clic para seleccionar</div>
+        <input type="file" id="input-factura" class="upload-input" accept=".pdf" onchange="handleFile(this,'factura')">
+      </div>
+      <div class="upload-card" id="drop-oc" onclick="document.getElementById('input-oc').click()"
+           ondragover="ev.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="handleDrop(event,'oc')">
+        <div class="upload-icon">📋</div>
+        <div class="upload-title">PDF de Orden de Compra</div>
+        <div class="upload-sub">Solo para La Madrileña · Opcional</div>
+        <input type="file" id="input-oc" class="upload-input" accept=".pdf" onchange="handleFile(this,'oc')">
+      </div>
+    </div>
+
+    <div id="preview-factura" class="preview-card" style="display:none">
+      <div class="preview-title">📄 Datos extraídos — Factura</div>
+      <div class="preview-grid" id="preview-factura-grid"></div>
+    </div>
+    <div id="preview-oc" class="preview-card" style="display:none">
+      <div class="preview-title">📋 Datos extraídos — OC</div>
+      <div class="preview-grid" id="preview-oc-grid"></div>
+      <div id="match-result"></div>
+    </div>
+
+    <div id="save-section" style="display:none; margin-top:1rem;">
+      <button class="btn btn-primary" onclick="saveFactura()" style="padding:.6rem 1.5rem; font-size:.9rem;">
+        💾 Guardar Factura
+      </button>
+    </div>
+  </div>
+
+  <!-- ── CLIENTES ── -->
+  <div id="view-clientes" class="view">
+    <div class="page-header">
+      <div class="page-title">Clientes</div>
+      <div class="page-sub">Directorio de clientes de Marketing TDI</div>
+    </div>
+    <div class="clients-grid" id="clients-grid"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- STATUS MODAL -->
+<div class="modal-overlay" id="status-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Actualizar estatus de pago</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="font-family:var(--mono); font-size:.8rem; color:var(--muted); margin-bottom:1rem;" id="modal-folio"></div>
+    <div class="status-options">
+      <div class="status-option" onclick="selectStatus('pendiente')" id="opt-pendiente">
+        <div class="status-option-icon">⏳</div>
+        <div class="status-option-info">
+          <div class="status-option-name">Pendiente de pago</div>
+          <div class="status-option-desc">Factura emitida, sin pago registrado</div>
+        </div>
+      </div>
+      <div class="status-option" onclick="selectStatus('pagado')" id="opt-pagado">
+        <div class="status-option-icon">✅</div>
+        <div class="status-option-info">
+          <div class="status-option-name">Pago realizado</div>
+          <div class="status-option-desc">Registrar fecha y monto de pago recibido</div>
+        </div>
+      </div>
+      <div class="status-option" onclick="selectStatus('complemento')" id="opt-complemento">
+        <div class="status-option-icon">📄</div>
+        <div class="status-option-info">
+          <div class="status-option-name">Complemento de pago elaborado</div>
+          <div class="status-option-desc">CFDI de pago ya timbrado</div>
+        </div>
+      </div>
+    </div>
+    <div class="extra-fields" id="extra-pagado">
+      <div class="form-group">
+        <label class="form-label">Fecha de pago recibido</label>
+        <input type="date" class="form-input" id="input-fecha-pago">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Monto recibido (MXN)</label>
+        <input type="number" class="form-input" id="input-monto-pago" placeholder="0.00">
+      </div>
+    </div>
+    <div class="extra-fields" id="extra-complemento">
+      <div class="form-group">
+        <label class="form-label">Fecha del complemento de pago</label>
+        <input type="date" class="form-input" id="input-fecha-complemento">
+      </div>
+    </div>
+    <div style="display:flex; gap:.75rem; justify-content:flex-end; margin-top:1rem;">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStatus()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+let facturas = JSON.parse(localStorage.getItem('tdi_facturas') || '[]');
+let pendingFactura = null;
+let pendingOC      = null;
+let editingId      = null;
+let selectedStatus = null;
+
+const MAD_RFC = 'MAD841018U49';
+
+const CLIENTES_CATALOG = {
+  'MAD841018U49': { name:'LA MADRILEÑA',            regimen:'623', cond:30, requiresOC:true  },
+  'ATR050303H42': { name:'ALDAFA TRANSPORTES',       regimen:'624', cond:30, requiresOC:false },
+  'RSL180402KH6': { name:'RAAF SERVICIOS LOGISTICOS',regimen:'601', cond:30, requiresOC:false },
+  'NME171017UI2': { name:'NUEVA MUSICA ESENCIAL',    regimen:'601', cond:30, requiresOC:false },
+  'DIF211028G62': { name:'DIFERENCIARTE',            regimen:'601', cond:30, requiresOC:false },
+  'CES801003T12': { name:'CESANTONI',                regimen:'601', cond:30, requiresOC:false },
+  'PSO820923UH8': { name:'LA PUERTA DEL SOL',        regimen:'601', cond:30, requiresOC:false },
+};
+
+function save() { localStorage.setItem('tdi_facturas', JSON.stringify(facturas)); }
+
+// ── DATE ──────────────────────────────────────────────────────────────────
+document.getElementById('topbar-date').textContent =
+  new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+// ── NAV ───────────────────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(id==='dashboard')  renderDashboard();
+  if(id==='facturas')   renderFacturasTable();
+  if(id==='clientes')   renderClientes();
+  if(id==='nueva')      resetNueva();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────
+function toast(msg, emoji='✅') {
+  const t = document.getElementById('toast');
+  t.innerHTML = emoji+' '+msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// ── PDF EXTRACTION ────────────────────────────────────────────────────────
+async function extractText(file) {
+  const ab = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:ab}).promise;
+  let text = '';
+  for(let i=1; i<=pdf.numPages; i++) {
+    const pg = await pdf.getPage(i);
+    const tc = await pg.getTextContent();
+    text += tc.items.map(x=>x.str).join(' ') + '\n';
+  }
+  return text;
+}
+
+function parseFactura(text) {
+  const get = (patterns) => {
+    for(const p of patterns) {
+      const m = text.match(p);
+      if(m) return m[1]?.trim();
+    }
+    return '';
+  };
+  const folio = get([/(?:^|\s)(\d{3,4})\s/m, /Folio\s+(\d+)/i]);
+  const uuid  = get([/([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})/i]);
+  const fecha = get([/(\d{4}-\d{2}-\d{2})T/]);
+  const rfcR  = get([/RFC:\s*([A-Z]{3,4}\d{6}[A-Z0-9]{3})/i,/Receptor[\s\S]{0,200}RFC:\s*([A-Z]{3,4}\d{6}[A-Z0-9]{3})/i]);
+
+  // Montos
+  const montos = [...text.matchAll(/(\d{1,3}(?:,\d{3})*(?:\.\d{2}))/g)].map(m=>parseFloat(m[1].replace(/,/g,'')));
+  const subtotal = get([/Subtotal\s+([\d,]+\.\d{2})/i]);
+  const total    = get([/Total\s+([\d,]+\.\d{2})/i]);
+  const iva      = get([/IVA[T]?\s+[\d.]+\s+([\d,]+\.\d{2})/i]);
+
+  const rfcEmpleado = rfcR && rfcR !== 'MTD220902466' ? rfcR : '';
+  const cliente = CLIENTES_CATALOG[rfcEmpleado]?.name || rfcEmpleado;
+
+  // descripcion
+  const desc = get([/(?:FEE DISEñO|SERVICIO[^0-9\n]{3,60})/i]) || 'Servicios de Marketing';
+
+  return {
+    folio, uuid, fecha,
+    rfcReceptor: rfcEmpleado,
+    cliente,
+    descripcion: desc.trim().substring(0,80),
+    subtotal: parseFloat((subtotal||'0').replace(/,/g,'')),
+    iva:      parseFloat((iva||'0').replace(/,/g,'')),
+    total:    parseFloat((total||'0').replace(/,/g,'')),
+    estatusSAT: 'vigente',
+    estatusPago: 'pendiente',
+    fechaPago: '', montoPago: '', fechaComplemento: '',
+    oc: '', totalOC: 0,
+    createdAt: new Date().toISOString()
+  };
+}
+
+function parseOC(text) {
+  const get = (patterns) => {
+    for(const p of patterns) { const m=text.match(p); if(m) return m[1]?.trim(); }
+    return '';
+  };
+  const oc    = get([/(?:Orden de compra|OC):\s*(OCMAD\d+)/i, /(OCMAD\d+)/]);
+  const total = get([/Total:\s*([\d,]+\.\d{2})/i]);
+  return { oc, total: parseFloat((total||'0').replace(/,/g,'')) };
+}
+
+// ── FILE HANDLING ─────────────────────────────────────────────────────────
+function handleDrop(ev, type) {
+  ev.preventDefault();
+  document.getElementById('drop-'+type).classList.remove('drag');
+  const file = ev.dataTransfer.files[0];
+  if(file) processFile(file, type);
+}
+function handleFile(input, type) {
+  if(input.files[0]) processFile(input.files[0], type);
+}
+async function processFile(file, type) {
+  try {
+    const text = await extractText(file);
+    if(type==='factura') {
+      pendingFactura = parseFactura(text);
+      showPreviewFactura();
+    } else {
+      pendingOC = parseOC(text);
+      showPreviewOC();
+    }
+  } catch(e) { toast('Error al leer el PDF', '❌'); }
+}
+
+function showPreviewFactura() {
+  const f = pendingFactura;
+  const grid = document.getElementById('preview-factura-grid');
+  grid.innerHTML = [
+    ['Folio', f.folio||'—'],
+    ['UUID', (f.uuid||'—').substring(0,20)+'…'],
+    ['Fecha', f.fecha||'—'],
+    ['RFC Receptor', f.rfcReceptor||'—'],
+    ['Cliente', f.cliente||'—'],
+    ['Subtotal', fmt(f.subtotal)],
+    ['IVA', fmt(f.iva)],
+    ['Total', fmt(f.total)],
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  document.getElementById('preview-factura').style.display='block';
+  document.getElementById('save-section').style.display='block';
+}
+function showPreviewOC() {
+  const o = pendingOC;
+  const grid = document.getElementById('preview-oc-grid');
+  grid.innerHTML = [
+    ['No. OC', o.oc||'—'],
+    ['Total OC', fmt(o.total)],
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  document.getElementById('preview-oc').style.display='block';
+  // Match
+  if(pendingFactura) {
+    const ok = Math.abs(pendingFactura.total - o.total) < 1;
+    document.getElementById('match-result').innerHTML =
+      `<div class="match-badge ${ok?'match-ok':'match-err'}">
+        ${ok ? '✅ Los montos coinciden — OC y factura cuadran' : '⚠️ Los montos NO coinciden · OC: '+fmt(o.total)+' / Factura: '+fmt(pendingFactura.total)}
+      </div>`;
+  }
+}
+
+function saveFactura() {
+  if(!pendingFactura) return;
+  if(pendingOC) { pendingFactura.oc = pendingOC.oc; pendingFactura.totalOC = pendingOC.total; }
+  pendingFactura.id = Date.now();
+  facturas.unshift(pendingFactura);
+  save();
+  toast('Factura '+pendingFactura.folio+' guardada');
+  resetNueva();
+  renderDashboard();
+}
+function resetNueva() {
+  pendingFactura=null; pendingOC=null;
+  document.getElementById('preview-factura').style.display='none';
+  document.getElementById('preview-oc').style.display='none';
+  document.getElementById('save-section').style.display='none';
+  document.getElementById('input-factura').value='';
+  document.getElementById('input-oc').value='';
+}
+
+// ── FORMAT ────────────────────────────────────────────────────────────────
+function fmt(n) { return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+function isVencido(f) {
+  if(f.estatusPago!=='pendiente') return false;
+  const d = new Date(f.fecha); if(!d) return false;
+  return (Date.now()-d.getTime()) > 30*24*3600*1000;
+}
+function isProximoVencer(f) {
+  if(f.estatusPago!=='pendiente') return false;
+  const d = new Date(f.fecha); if(!d) return false;
+  const diff = 30*24*3600*1000 - (Date.now()-d.getTime());
+  return diff>0 && diff<=5*24*3600*1000;
+}
+
+function statusBadge(f) {
+  if(isVencido(f))           return '<span class="badge badge-red">❌ Vencida</span>';
+  if(f.estatusPago==='pagado')      return '<span class="badge badge-green">✅ Pagado</span>';
+  if(f.estatusPago==='complemento') return '<span class="badge badge-purple">📄 Complemento</span>';
+  return '<span class="badge badge-yellow">⏳ Pendiente</span>';
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const total     = facturas.reduce((s,f)=>s+f.total,0);
+  const cobrado   = facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').reduce((s,f)=>s+f.total,0);
+  const pendiente = facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).reduce((s,f)=>s+f.total,0);
+  const vencido   = facturas.filter(f=>isVencido(f)).reduce((s,f)=>s+f.total,0);
+
+  document.getElementById('stat-total').textContent     = fmt(total);
+  document.getElementById('stat-count').textContent     = facturas.length+' facturas';
+  document.getElementById('stat-cobrado').textContent   = fmt(cobrado);
+  document.getElementById('stat-cobrado-count').textContent = facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').length+' facturas';
+  document.getElementById('stat-pendiente').textContent = fmt(pendiente);
+  document.getElementById('stat-pendiente-count').textContent = facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).length+' facturas';
+  document.getElementById('stat-vencido').textContent   = fmt(vencido);
+  document.getElementById('stat-vencido-count').textContent = facturas.filter(f=>isVencido(f)).length+' facturas';
+
+  // Alertas
+  const proximas = facturas.filter(isProximoVencer);
+  const alertBox = document.getElementById('alerts-box');
+  if(proximas.length) {
+    alertBox.style.display='block';
+    document.getElementById('alerts-list').innerHTML =
+      proximas.map(f=>`<div class="alert-item">Factura ${f.folio} · ${f.cliente} · <span>${fmt(f.total)}</span></div>`).join('');
+  } else { alertBox.style.display='none'; }
+
+  // Tabla resumen
+  const tbody = document.getElementById('dash-table-body');
+  if(!facturas.length) {
+    tbody.innerHTML='<tr><td colspan="6" class="empty">No hay facturas registradas</td></tr>'; return;
+  }
+  tbody.innerHTML = facturas.slice(0,10).map(f=>`
+    <tr>
+      <td class="mono">${f.folio||'—'}</td>
+      <td class="mono">${f.fecha||'—'}</td>
+      <td>${f.cliente||'—'}</td>
+      <td class="mono">${fmt(f.total)}</td>
+      <td>${statusBadge(f)}</td>
+      <td class="mono">${f.oc||'—'}</td>
+    </tr>`).join('');
+}
+
+// ── FACTURAS TABLE ────────────────────────────────────────────────────────
+function renderFacturasTable() {
+  const search  = document.getElementById('search-input').value.toLowerCase();
+  const cliente = document.getElementById('filter-cliente').value;
+  const status  = document.getElementById('filter-status').value;
+  const mes     = document.getElementById('filter-mes').value;
+
+  // Populate filters
+  const clientes = [...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))];
+  const selCliente = document.getElementById('filter-cliente');
+  if(selCliente.children.length<=1) {
+    clientes.forEach(rfc=>{
+      const o=document.createElement('option'); o.value=rfc;
+      o.textContent=(CLIENTES_CATALOG[rfc]?.name||rfc); selCliente.appendChild(o);
+    });
+  }
+  const meses = [...new Set(facturas.map(f=>f.fecha?.substring(0,7)).filter(Boolean))].sort().reverse();
+  const selMes = document.getElementById('filter-mes');
+  if(selMes.children.length<=1) {
+    meses.forEach(m=>{
+      const o=document.createElement('option'); o.value=m; o.textContent=m; selMes.appendChild(o);
+    });
+  }
+
+  let data = facturas.filter(f=>{
+    if(search && !((f.folio||'').toLowerCase().includes(search)||(f.cliente||'').toLowerCase().includes(search))) return false;
+    if(cliente && f.rfcReceptor!==cliente) return false;
+    if(mes && !f.fecha?.startsWith(mes)) return false;
+    if(status==='vencido' && !isVencido(f)) return false;
+    if(status && status!=='vencido' && f.estatusPago!==status) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('facturas-table-body');
+  if(!data.length) {
+    tbody.innerHTML='<tr><td colspan="15" class="empty">No hay facturas que coincidan</td></tr>'; return;
+  }
+  tbody.innerHTML = data.map(f=>`
+    <tr>
+      <td class="mono">${f.folio||'—'}</td>
+      <td class="mono" style="font-size:.65rem">${(f.uuid||'—').substring(0,13)}…</td>
+      <td class="mono">${f.fecha||'—'}</td>
+      <td>${f.cliente||'—'}</td>
+      <td class="mono" style="font-size:.7rem">${f.rfcReceptor||'—'}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.descripcion||'—'}</td>
+      <td class="mono">${fmt(f.subtotal)}</td>
+      <td class="mono">${fmt(f.iva)}</td>
+      <td class="mono"><strong>${fmt(f.total)}</strong></td>
+      <td class="mono">${f.oc||'—'}</td>
+      <td><span class="badge badge-green">✅ Vigente</span></td>
+      <td>${statusBadge(f)}</td>
+      <td class="mono">${f.fechaPago||'—'}</td>
+      <td class="mono">${f.fechaComplemento||'—'}</td>
+      <td><button class="btn btn-outline" style="padding:.3rem .7rem;font-size:.7rem" onclick="openModal(${f.id})">Editar</button></td>
+    </tr>`).join('');
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openModal(id) {
+  editingId = id;
+  const f = facturas.find(x=>x.id===id);
+  document.getElementById('modal-folio').textContent = `Factura ${f.folio||''} · ${f.cliente||''} · ${fmt(f.total)}`;
+  selectedStatus = f.estatusPago||'pendiente';
+  highlightStatus(selectedStatus);
+  document.getElementById('input-fecha-pago').value = f.fechaPago||'';
+  document.getElementById('input-monto-pago').value = f.montoPago||'';
+  document.getElementById('input-fecha-complemento').value = f.fechaComplemento||'';
+  document.getElementById('status-modal').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('status-modal').classList.remove('open');
+  editingId=null; selectedStatus=null;
+}
+function selectStatus(s) { selectedStatus=s; highlightStatus(s); }
+function highlightStatus(s) {
+  ['pendiente','pagado','complemento'].forEach(x=>{
+    document.getElementById('opt-'+x).classList.toggle('selected', x===s);
+  });
+  document.getElementById('extra-pagado').classList.toggle('show', s==='pagado');
+  document.getElementById('extra-complemento').classList.toggle('show', s==='complemento');
+}
+function saveStatus() {
+  if(!editingId||!selectedStatus) return;
+  const f = facturas.find(x=>x.id===editingId);
+  f.estatusPago = selectedStatus;
+  if(selectedStatus==='pagado') {
+    f.fechaPago  = document.getElementById('input-fecha-pago').value;
+    f.montoPago  = document.getElementById('input-monto-pago').value;
+  }
+  if(selectedStatus==='complemento') {
+    f.fechaComplemento = document.getElementById('input-fecha-complemento').value;
+  }
+  save(); closeModal();
+  toast('Estatus actualizado');
+  renderFacturasTable(); renderDashboard();
+}
+
+// ── CLIENTES ──────────────────────────────────────────────────────────────
+function renderClientes() {
+  const grid = document.getElementById('clients-grid');
+  const rfcs = Object.keys(CLIENTES_CATALOG);
+  grid.innerHTML = rfcs.map(rfc=>{
+    const c = CLIENTES_CATALOG[rfc];
+    const fs = facturas.filter(f=>f.rfcReceptor===rfc);
+    const total = fs.reduce((s,f)=>s+f.total,0);
+    return `<div class="client-card">
+      <div class="client-name">${c.name}</div>
+      <div class="client-rfc">${rfc} · Reg. ${c.regimen}</div>
+      <div style="margin-bottom:.75rem">
+        ${c.requiresOC?'<span class="badge badge-purple">Requiere OC</span>':'<span class="badge badge-gray">Solo factura</span>'}
+        <span class="badge badge-gray" style="margin-left:.25rem">Pago ${c.cond} días</span>
+      </div>
+      <div class="client-stats">
+        <div class="client-stat"><div class="client-stat-val">${fs.length}</div><div class="client-stat-lbl">Facturas</div></div>
+        <div class="client-stat"><div class="client-stat-val" style="font-size:.85rem">${fmt(total)}</div><div class="client-stat-lbl">Total</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────────────────────
+function exportExcel() {
+  const rows = [
+    ['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento']
+  ];
+  facturas.forEach(f=>{
+    rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',
+      isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'']);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Facturas');
+  XLSX.writeFile(wb, 'Control_Facturacion_TDI.xlsx');
+  toast('Excel exportado');
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+renderDashboard();
+</script>
+</body>
+</html>
