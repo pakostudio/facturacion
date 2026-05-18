@@ -580,7 +580,7 @@ function showPreviewFactura(){
 function showPreviewOC(){
   const o=pendingOC;
   document.getElementById('preview-oc-grid').innerHTML=[
-    ['No. OC',o.oc||'—'],['Total OC',fmt(o.total)],
+    ['No. OC',o.oc||'—'],['Subtotal OC',fmt(o.subtotal)],['IVA OC',fmt(o.iva)],['Total OC c/IVA',fmt(o.total)],
   ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
   document.getElementById('preview-oc').style.display='block';
   if(pendingFactura){
