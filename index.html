@@ -546,8 +546,16 @@ function parseFactura(text){
     createdAt:new Date().toISOString()};
 }
 function parseOC(text){
-  const get=(p)=>{const m=text.match(p);return m?m[1]?.trim():'';};
-  return {oc:get(/(OCMAD\d+)/),total:parseFloat((get(/Total:\s*([\d,]+\.\d{2})/i)||'0').replace(/,/g,''))};
+  const toMXN=s=>parseFloat((s||'0').replace(/,/g,''));
+  const ocM=text.match(/(OCMAD\d+)/);
+  const oc=ocM?ocM[1]:'';
+  const subtotalM=text.match(/Subtotal:\s*([\d,]+\.\d{2})/i);
+  const totalM=text.match(/Total:\s*([\d,]+\.\d{2})/i);
+  const ivaM=text.match(/IVA:\s*([\d,]+\.\d{2})/i);
+  const subtotal=subtotalM?toMXN(subtotalM[1]):0;
+  const total=totalM?toMXN(totalM[1]):0;
+  const iva=ivaM?toMXN(ivaM[1]):0;
+  return {oc,subtotal,iva,total};
 }
 function handleDrop(ev,type){ev.preventDefault();document.getElementById('drop-'+type).classList.remove('drag');const f=ev.dataTransfer.files[0];if(f) processFile(f,type);}
 function handleFile(input,type){if(input.files[0]) processFile(input.files[0],type);}
@@ -576,8 +584,11 @@ function showPreviewOC(){
   ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
   document.getElementById('preview-oc').style.display='block';
   if(pendingFactura){
-    const ok=Math.abs(pendingFactura.total-o.total)<1;
-    document.getElementById('match-result').innerHTML=`<div class="match-badge ${ok?'match-ok':'match-err'}">${ok?'✅ Montos coinciden':'⚠️ Montos no coinciden · OC: '+fmt(o.total)+' / Factura: '+fmt(pendingFactura.total)}</div>`;
+    // Comparar total OC con total factura (ambos con IVA)
+    const ocTotal=o.total||o.subtotal;
+    const facTotal=pendingFactura.total;
+    const ok=Math.abs(facTotal-ocTotal)<1;
+    document.getElementById('match-result').innerHTML=`<div class="match-badge ${ok?'match-ok':'match-err'}">${ok?'✅ Montos coinciden · Total OC y Factura: '+fmt(facTotal):'⚠️ Montos no coinciden · OC: '+fmt(ocTotal)+' / Factura: '+fmt(facTotal)}</div>`;
   }
 }
 function saveFactura(){
