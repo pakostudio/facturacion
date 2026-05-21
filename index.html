@@ -276,6 +276,7 @@ tr:hover td{background:#f8faff;}
       <div class="form-group"><label class="form-label">Monto recibido (MXN)</label><input type="number" class="form-input" id="input-monto-pago" placeholder="0.00"></div>
     </div>
     <div class="extra-fields" id="extra-complemento">
+      <div class="form-group"><label class="form-label">Fecha de pago</label><input type="date" class="form-input" id="input-fecha-pago-comp"></div>
       <div class="form-group"><label class="form-label">Fecha del complemento</label><input type="date" class="form-input" id="input-fecha-complemento"></div>
     </div>
     <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">
@@ -374,8 +375,13 @@ function isProximoVencer(f){
 function statusBadge(f){
   if(isVencido(f))                    return '<span class="badge badge-red">❌ Vencida</span>';
   if(f.estatusPago==='pagado')        return '<span class="badge badge-green">✅ Pagado</span>';
-  if(f.estatusPago==='complemento')   return '<span class="badge badge-purple">📄 Complemento</span>';
+  if(f.estatusPago==='complemento')   return '<span class="badge badge-green">✅ Pagado</span>';
   return '<span class="badge badge-yellow">⏳ Pendiente</span>';
+}
+function complementoBadge(f){
+  if(f.estatusPago==='complemento')   return '<span class="badge badge-purple">📄 Elaborado</span>';
+  if(f.fechaComplemento)              return '<span class="badge badge-purple">📄 Elaborado</span>';
+  return '<span class="badge badge-gray">—</span>';
 }
 
 function renderDashboard(){
@@ -453,7 +459,7 @@ function renderFacturasTable(){
     <td><span class="badge badge-green">✅ Vigente</span></td>
     <td>${statusBadge(f)}</td>
     <td class="mono">${f.fechaPago||'—'}</td>
-    <td class="mono">${f.fechaComplemento||'—'}</td>
+    <td>${complementoBadge(f)}${f.fechaComplemento?`<div style="font-size:.65rem;color:var(--muted);font-family:var(--mono);margin-top:.15rem">${f.fechaComplemento}</div>`:''}</td>
     <td><button class="btn btn-outline" style="padding:.3rem .7rem;font-size:.7rem" onclick="openModal(${f.id})">Editar</button></td>
   </tr>`).join('');
 }
@@ -466,6 +472,7 @@ function openModal(id){
   highlightStatus(selectedStatus);
   document.getElementById('input-fecha-pago').value=f.fechaPago||'';
   document.getElementById('input-monto-pago').value=f.montoPago||'';
+  document.getElementById('input-fecha-pago-comp').value=f.fechaPagoComp||f.fechaPago||'';
   document.getElementById('input-fecha-complemento').value=f.fechaComplemento||'';
   document.getElementById('status-modal').classList.add('open');
 }
@@ -483,7 +490,7 @@ function saveStatus(){
   const f=facturas.find(x=>x.id===editingId);
   f.estatusPago=selectedStatus;
   if(selectedStatus==='pagado'){f.fechaPago=document.getElementById('input-fecha-pago').value;f.montoPago=document.getElementById('input-monto-pago').value;}
-  if(selectedStatus==='complemento'){f.fechaComplemento=document.getElementById('input-fecha-complemento').value;}
+  if(selectedStatus==='complemento'){f.fechaPagoComp=document.getElementById('input-fecha-pago-comp').value;f.fechaComplemento=document.getElementById('input-fecha-complemento').value;if(f.fechaPagoComp&&!f.fechaPago) f.fechaPago=f.fechaPagoComp;}
   save();closeModal();toast('Estatus actualizado');
   renderFacturasTable();renderDashboard();
 }
