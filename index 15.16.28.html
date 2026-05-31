@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TDI Control · Facturación</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+.conc-drop{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1.5rem;}
+.conc-drop:hover,.conc-drop.drag{border-color:var(--accent);background:#f5f3ff;}
+.conc-icon{font-size:3rem;margin-bottom:.75rem;}
+.conc-title{font-weight:700;font-size:1rem;margin-bottom:.3rem;}
+.conc-sub{font-size:.75rem;color:var(--muted);}
+.conc-results{margin-top:1.5rem;}
+.conc-section{margin-bottom:1.5rem;}
+.conc-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;padding:.4rem .75rem;border-radius:6px;}
+.conc-ok .conc-section-title{background:#d1fae5;color:#065f46;}
+.conc-warn .conc-section-title{background:#fef3c7;color:#92400e;}
+.conc-err .conc-section-title{background:#fee2e2;color:#991b1b;}
+.conc-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;font-size:.8rem;}
+.conc-row-info{display:flex;flex-direction:column;gap:.1rem;}
+.conc-row-monto{font-family:var(--mono);font-weight:700;color:var(--green);}
+.conc-row-fecha{font-family:var(--mono);font-size:.7rem;color:var(--muted);}
+.conc-apply-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;cursor:pointer;}
+.conc-apply-btn:hover{opacity:.85;}
+.conc-applied{background:#d1fae5;color:#065f46;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;}
+.alert-cfg-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.alert-cfg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.alert-cfg-name{font-weight:700;font-size:.95rem;}
+.alert-cfg-toggle{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);}
+.toggle-switch{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:20px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+input:checked+.toggle-slider{background:var(--accent);}
+input:checked+.toggle-slider:before{transform:translateX(16px);}
+.alert-day-input{width:60px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.85rem;font-family:var(--mono);text-align:center;outline:none;}
+.alert-day-input:focus{border-color:var(--accent);}
+.alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot-active{background:var(--green);}
+.dot-inactive{background:#cbd5e1;}
+</style>
+  --bg:#f4f6f9;--surface:#ffffff;--card:#ffffff;--border:#e2e7ef;
+  --accent:#5b4fcf;--accent2:#e8445a;--green:#0e9f6e;--yellow:#d97706;
+  --red:#dc2626;--text:#1a1d23;--muted:#6b7280;
+  --mono:'DM Mono',monospace;--sans:'Sora',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.topbar-brand{display:flex;align-items:center;gap:.75rem;}
+.topbar-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;}
+.topbar-title{font-weight:700;font-size:1rem;letter-spacing:-.02em;color:var(--text);}
+.topbar-sub{font-size:.7rem;color:var(--muted);font-family:var(--mono);}
+.topbar-date{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
+.layout{display:flex;min-height:calc(100vh - 60px);}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;box-shadow:1px 0 4px rgba(0,0,0,.04);}
+.nav-section{margin-bottom:1.5rem;}
+.nav-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding:0 1.25rem;margin-bottom:.5rem;}
+.nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.25rem;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
+.nav-item:hover{color:var(--accent);background:rgba(91,79,207,.05);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,79,207,.08);font-weight:600;}
+.nav-icon{font-size:1rem;width:18px;text-align:center;}
+.main{flex:1;padding:2rem;overflow-y:auto;background:var(--bg);}
+.view{display:none;}.view.active{display:block;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat-card.purple::before{background:var(--accent);}
+.stat-card.green::before{background:var(--green);}
+.stat-card.yellow::before{background:var(--yellow);}
+.stat-card.red::before{background:var(--red);}
+.stat-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;}
+.stat-value{font-size:1.5rem;font-weight:700;font-family:var(--mono);}
+.stat-value.purple{color:var(--accent);}
+.stat-value.green{color:var(--green);}
+.stat-value.yellow{color:var(--yellow);}
+.stat-value.red{color:var(--red);}
+.stat-sub{font-size:.7rem;color:var(--muted);margin-top:.25rem;}
+.alerts-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;}
+.alerts-title{font-size:.75rem;font-weight:600;color:#92400e;margin-bottom:.5rem;}
+.alert-item{font-size:.8rem;color:var(--text);padding:.2rem 0;}
+.alert-item span{color:var(--muted);font-family:var(--mono);}
+.page-header{margin-bottom:1.5rem;}
+.page-title{font-size:1.4rem;font-weight:700;letter-spacing:-.03em;color:var(--text);}
+.page-sub{font-size:.8rem;color:var(--muted);margin-top:.2rem;}
+.toolbar{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap;}
+.filter-select,.filter-input{background:#fff;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.45rem .75rem;font-size:.8rem;font-family:var(--sans);outline:none;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.filter-select:focus,.filter-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,79,207,.12);}
+.btn{padding:.45rem 1rem;border-radius:8px;border:none;font-size:.8rem;font-family:var(--sans);cursor:pointer;font-weight:600;transition:all .15s;display:flex;align-items:center;gap:.4rem;}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 1px 4px rgba(91,79,207,.3);}
+.btn-primary:hover{background:#4a3db8;}
+.btn-outline{background:#fff;color:var(--text);border:1px solid var(--border);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-green{background:var(--green);color:#fff;box-shadow:0 1px 4px rgba(14,159,110,.3);}
+.btn-green:hover{opacity:.85;}
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;font-size:.8rem;}
+thead{background:#f8fafc;}
+th{padding:.75rem 1rem;text-align:left;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:.7rem 1rem;border-bottom:1px solid #f1f5f9;background:#fff;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#f8faff;}
+.mono{font-family:var(--mono);}
+.badge{display:inline-flex;align-items:center;gap:.3rem;padding:.2rem .6rem;border-radius:20px;font-size:.7rem;font-weight:600;white-space:nowrap;}
+.badge-green{background:#d1fae5;color:#065f46;}
+.badge-yellow{background:#fef3c7;color:#92400e;}
+.badge-red{background:#fee2e2;color:#991b1b;}
+.badge-purple{background:#ede9fe;color:#4c1d95;}
+.badge-gray{background:#f3f4f6;color:#4b5563;}
+.upload-section{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+.upload-card{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.upload-card:hover,.upload-card.drag{border-color:var(--accent);background:#f5f3ff;}
+.upload-icon{font-size:2.5rem;margin-bottom:.75rem;}
+.upload-title{font-weight:600;font-size:.95rem;margin-bottom:.3rem;color:var(--text);}
+.upload-sub{font-size:.75rem;color:var(--muted);}
+.upload-input{display:none;}
+.preview-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.preview-title{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;}
+.preview-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.preview-field{display:flex;flex-direction:column;gap:.15rem;}
+.preview-label{font-size:.65rem;color:var(--muted);}
+.preview-value{font-size:.85rem;font-family:var(--mono);color:var(--text);}
+.match-badge{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem;border-radius:10px;font-weight:700;font-size:.9rem;margin-top:1rem;}
+.match-ok{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.match-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;animation:slideUp .2s ease;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0;}}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
+.modal-title{font-size:1rem;font-weight:700;color:var(--text);}
+.modal-close{cursor:pointer;background:none;border:none;color:var(--muted);font-size:1.2rem;}
+.modal-close:hover{color:var(--text);}
+.form-group{margin-bottom:1rem;}
+.form-label{font-size:.75rem;color:var(--muted);margin-bottom:.35rem;display:block;}
+.form-input,.form-select{width:100%;background:#f8fafc;border:1px solid var(--border);color:var(--text);border-radius:8px;padding:.55rem .75rem;font-size:.85rem;font-family:var(--sans);outline:none;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);background:#fff;}
+.status-options{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem;}
+.status-option{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:all .15s;background:#fff;}
+.status-option:hover{border-color:var(--accent);background:#f5f3ff;}
+.status-option.selected{border-color:var(--accent);background:#ede9fe;}
+.status-option-icon{font-size:1.2rem;}
+.status-option-info{flex:1;}
+.status-option-name{font-size:.85rem;font-weight:600;color:var(--text);}
+.status-option-desc{font-size:.7rem;color:var(--muted);}
+.extra-fields{display:none;}.extra-fields.show{display:block;}
+.clients-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;}
+.client-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;transition:transform .2s,box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.client-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.client-name{font-weight:700;font-size:.95rem;margin-bottom:.2rem;color:var(--text);}
+.client-rfc{font-family:var(--mono);font-size:.75rem;color:var(--muted);margin-bottom:.75rem;}
+.client-stats{display:flex;gap:1rem;}
+.client-stat{text-align:center;}
+.client-stat-val{font-size:1rem;font-weight:700;font-family:var(--mono);color:var(--accent);}
+.client-stat-lbl{font-size:.65rem;color:var(--muted);}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#f1f5f9;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8;}
+.empty{text-align:center;padding:4rem 2rem;color:var(--muted);font-size:.9rem;}
+.toast{position:fixed;bottom:2rem;right:2rem;background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem 1.25rem;font-size:.85rem;display:flex;align-items:center;gap:.5rem;z-index:300;transform:translateY(100px);opacity:0;transition:all .3s;box-shadow:0 8px 32px rgba(0,0,0,.15);color:var(--text);}
+.toast.show{transform:translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">TDI</div>
+    <div>
+      <div class="topbar-title">Control de Facturación</div>
+      <div class="topbar-sub">MARKETING TDI SA DE CV · MTD220902466</div>
+    </div>
+  </div>
+  <div class="topbar-date" id="topbar-date"></div>
+</div>
+<div class="layout">
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">General</div>
+    <div class="nav-item active" onclick="showView('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+    <div class="nav-item" onclick="showView('facturas',this)"><span class="nav-icon">🧾</span> Facturas</div>
+    <div class="nav-item" onclick="showView('nueva',this)"><span class="nav-icon">➕</span> Nueva Factura</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Administración</div>
+    <div class="nav-item" onclick="showView('clientes',this)"><span class="nav-icon">🏢</span> Clientes</div>
+    <div class="nav-item" onclick="showView('alertas',this)"><span class="nav-icon">🔔</span> Alertas</div>
+    <div class="nav-item" onclick="showView('conciliacion',this)"><span class="nav-icon">🏦</span> Conciliación</div>
+  </div>
+</nav>
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div id="view-dashboard" class="view active">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Resumen general de facturación — Marketing TDI</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card purple"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div></div>
+      <div class="stat-card green"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div></div>
+      <div class="stat-card red"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div></div>
+    </div>
+    <div class="alerts-box" id="alerts-box" style="display:none">
+      <div class="alerts-title">⚠️ Facturas próximas a vencer (5 días)</div>
+      <div id="alerts-list"></div>
+    </div>
+    <div class="page-header" style="margin-top:1.5rem"><div class="page-title" style="font-size:1rem">Todas las facturas</div></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estatus Pago</th><th>OC</th></tr></thead>
+      <tbody id="dash-table-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- FACTURAS -->
+  <div id="view-facturas" class="view">
+    <div class="page-header"><div class="page-title">Facturas</div><div class="page-sub">Control completo de facturas emitidas</div></div>
+    <div class="toolbar">
+      <input class="filter-input" type="text" placeholder="Buscar folio, cliente…" oninput="renderFacturasTable()" id="search-input">
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-cliente"><option value="">Todos los clientes</option></select>
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-status">
+        <option value="">Todos los estatus</option>
+        <option value="pendiente">⏳ Pendiente</option>
+        <option value="pagado">✅ Pagado</option>
+        <option value="complemento">📄 Complemento</option>
+        <option value="vencido">❌ Vencido</option>
+      </select>
+      <select class="filter-select" onchange="renderFacturasTable()" id="filter-mes"><option value="">Todos los meses</option></select>
+      <button class="btn btn-green" onclick="exportExcel()">⬇️ Exportar Excel</button>
+    </div>
+    <div class="table-wrap">
+      <table><thead><tr>
+        <th>Folio</th><th>UUID</th><th>Fecha</th><th>Cliente</th><th>RFC</th>
+        <th>Descripción</th><th>Subtotal</th><th>IVA</th><th>Total</th>
+        <th>OC</th><th>Estatus SAT</th><th>Estatus Pago</th><th>F.Pago</th><th>Complemento</th><th>Acciones</th>
+      </tr></thead>
+      <tbody id="facturas-table-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- NUEVA -->
+  <div id="view-nueva" class="view">
+    <div class="page-header"><div class="page-title">Nueva Factura</div><div class="page-sub">Carga el PDF de la factura y opcionalmente la OC (solo La Madrileña)</div></div>
+    <div class="upload-section">
+      <div class="upload-card" id="drop-factura" onclick="document.getElementById('input-factura').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'factura')">
+        <div class="upload-icon">🧾</div><div class="upload-title">PDF de Factura</div>
+        <div class="upload-sub">Arrastra o haz clic para seleccionar</div>
+        <input type="file" id="input-factura" class="upload-input" accept=".pdf" onchange="handleFile(this,'factura')">
+      </div>
+      <div class="upload-card" id="drop-oc" onclick="document.getElementById('input-oc').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'oc')">
+        <div class="upload-icon">📋</div><div class="upload-title">PDF de Orden de Compra</div>
+        <div class="upload-sub">Solo para La Madrileña · Opcional</div>
+        <input type="file" id="input-oc" class="upload-input" accept=".pdf" onchange="handleFile(this,'oc')">
+      </div>
+    </div>
+    <div id="preview-factura" class="preview-card" style="display:none">
+      <div class="preview-title">📄 Datos extraídos — Factura</div>
+      <div class="preview-grid" id="preview-factura-grid"></div>
+    </div>
+    <div id="preview-oc" class="preview-card" style="display:none">
+      <div class="preview-title">📋 Datos extraídos — OC</div>
+      <div class="preview-grid" id="preview-oc-grid"></div>
+      <div id="match-result"></div>
+    </div>
+    <div id="save-section" style="display:none;margin-top:1rem;">
+      <button class="btn btn-primary" onclick="saveFactura()" style="padding:.6rem 1.5rem;font-size:.9rem;">💾 Guardar Factura</button>
+    </div>
+  </div>
+
+  <!-- CLIENTES -->
+  <div id="view-clientes" class="view">
+    <div class="page-header"><div class="page-title">Clientes</div><div class="page-sub">Directorio de clientes de Marketing TDI</div></div>
+    <div class="clients-grid" id="clients-grid"></div>
+  </div>
+
+  <!-- ALERTAS -->
+  <div id="view-alertas" class="view">
+    <div class="page-header">
+      <div class="page-title">Alertas de Facturación</div>
+      <div class="page-sub">Configura el día del mes en que debes facturar a cada cliente — recibirás un correo 3 días antes</div>
+    </div>
+    <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.82rem;color:#4c1d95;">
+      📧 Los recordatorios se enviarán a <strong>francisco@marketingtdi.com</strong> · 3 días antes de la fecha configurada · Abre el portal para activar la revisión
+    </div>
+    <div id="alertas-grid"></div>
+    <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveAlertConfig();checkAndSendAlerts()">💾 Guardar y verificar alertas ahora</button>
+      <button class="btn btn-outline" onclick="checkAndSendAlerts()">🔍 Verificar alertas sin guardar</button>
+    </div>
+    <div id="alert-log" style="margin-top:1rem;font-size:.8rem;color:var(--muted);"></div>
+  </div>
+
+  <!-- CONCILIACIÓN -->
+  <div id="view-conciliacion" class="view">
+    <div class="page-header">
+      <div class="page-title">Conciliación Bancaria</div>
+      <div class="page-sub">Sube el estado de cuenta BBVA y cruzamos automáticamente los abonos contra tus facturas pendientes</div>
+    </div>
+    <div class="conc-drop" id="conc-drop"
+      onclick="document.getElementById('conc-input').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleConcDrop(event)">
+      <div class="conc-icon">🏦</div>
+      <div class="conc-title">Estado de Cuenta BBVA</div>
+      <div class="conc-sub">Arrastra el PDF o haz clic para seleccionar · Solo BBVA México</div>
+      <input type="file" id="conc-input" style="display:none" accept=".pdf" onchange="handleConcFile(this)">
+    </div>
+    <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">
+      ⏳ Leyendo estado de cuenta…
+    </div>
+    <div id="conc-results" class="conc-results"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="status-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Actualizar estatus de pago</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div style="font-family:var(--mono);font-size:.8rem;color:var(--muted);margin-bottom:1rem;" id="modal-folio"></div>
+    <div class="status-options">
+      <div class="status-option" onclick="selectStatus('pendiente')" id="opt-pendiente">
+        <div class="status-option-icon">⏳</div>
+        <div class="status-option-info"><div class="status-option-name">Pendiente de pago</div><div class="status-option-desc">Sin pago registrado</div></div>
+      </div>
+      <div class="status-option" onclick="selectStatus('pagado')" id="opt-pagado">
+        <div class="status-option-icon">✅</div>
+        <div class="status-option-info"><div class="status-option-name">Pago realizado</div><div class="status-option-desc">Registrar fecha y monto</div></div>
+      </div>
+      <div class="status-option" onclick="selectStatus('complemento')" id="opt-complemento">
+        <div class="status-option-icon">📄</div>
+        <div class="status-option-info"><div class="status-option-name">Complemento de pago elaborado</div><div class="status-option-desc">CFDI de pago timbrado</div></div>
+      </div>
+    </div>
+    <div class="extra-fields" id="extra-pagado">
+      <div class="form-group"><label class="form-label">Fecha de pago</label><input type="date" class="form-input" id="input-fecha-pago"></div>
+      <div class="form-group"><label class="form-label">Monto recibido (MXN)</label><input type="number" class="form-input" id="input-monto-pago" placeholder="0.00"></div>
+    </div>
+    <div class="extra-fields" id="extra-complemento">
+      <div class="form-group"><label class="form-label">Fecha de pago</label><input type="date" class="form-input" id="input-fecha-pago-comp"></div>
+      <div class="form-group"><label class="form-label">Fecha del complemento</label><input type="date" class="form-input" id="input-fecha-complemento"></div>
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem;">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveStatus()">Guardar</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// ── DATOS PRECARGADOS ─────────────────────────────────────────────────────
+const SEED_DATA = [
+  {id:1,folio:"346",uuid:"088E3346-D742-423E-B124-4BC41193ED4F",fecha:"2026-01-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:2,folio:"347",uuid:"C458A915-7D38-49A8-B26C-E62D4E4751F8",fecha:"2026-01-16",rfcReceptor:"NME171017UI2",cliente:"NUEVA MUSICA ESENCIAL",descripcion:"Servicios de Marketing + Campaña Digital",subtotal:24935.75,iva:3989.72,total:28925.47,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:3,folio:"348",uuid:"E71DA6E8-6754-4B07-8C19-7CF7295944D2",fecha:"2026-01-16",rfcReceptor:"NME171017UI2",cliente:"NUEVA MUSICA ESENCIAL",descripcion:"Servicios de Marketing + Campaña Digital",subtotal:26887.57,iva:4302.01,total:31189.58,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:4,folio:"356",uuid:"96267AB3-1307-4B0D-92BB-F752A7ADF916",fecha:"2026-01-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:5,folio:"357",uuid:"56396308-0B97-431D-9894-6299F18A6638",fecha:"2026-01-26",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:67359.60,iva:10777.54,total:78137.14,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:6,folio:"361",uuid:"EDCFB610-CCC2-4D36-93BF-2BFA69D88AE3",fecha:"2026-02-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:7,folio:"363",uuid:"10A62109-5A1C-48C9-B88E-1D4F12115234",fecha:"2026-02-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:8,folio:"365",uuid:"ED39286E-635C-46B3-806B-31F961355A81",fecha:"2026-03-02",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:9,folio:"366",uuid:"B8D5E825-6803-4EBA-8FB7-AFE42F319F6D",fecha:"2026-03-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:10,folio:"368",uuid:"E6C8C6BD-CD05-4A9C-A7EA-431240E3F4B6",fecha:"2026-04-01",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:11,folio:"369",uuid:"882AAABA-FB72-4195-9B38-F676BA71170F",fecha:"2026-04-06",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:12,folio:"370",uuid:"2ADE5AB9-FEF4-4D8A-89F4-081B11FC3032",fecha:"2026-04-06",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:13,folio:"371",uuid:"38218678-F447-43BA-AF9B-3988156BB2AB",fecha:"2026-04-14",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:14,folio:"372",uuid:"7CB320E1-51B0-45AF-B9C4-101C23DB05B7",fecha:"2026-04-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:15,folio:"373",uuid:"65D40FA4-8F3A-4A66-8F1F-162573C93144",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032087"},
+  {id:16,folio:"374",uuid:"905A7933-C480-4997-BF1E-B92A9F12E78D",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO PUBLICIDAD EN INTERNET",subtotal:200000,iva:32000,total:232000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032090"},
+  {id:17,folio:"375",uuid:"F6C72929-277A-468F-9FE7-EA2D6E34A890",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO PUBLICIDAD EN INTERNET (Pauta Digital META)",subtotal:5590.92,iva:894.55,total:6485.47,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032091"},
+  {id:18,folio:"376",uuid:"560AD271-C34C-435E-986D-775788420658",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"FEE DISEÑO (Ene-Abr 2026)",subtotal:300000,iva:48000,total:348000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032155"},
+  {id:19,folio:"377",uuid:"852B1450-E355-458A-90BC-C9C48AF02E94",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO DE ADAPTACIONES DE MATERIALES PUBLICITARIOS",subtotal:11000,iva:1760,total:12760,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032150"},
+  {id:20,folio:"378",uuid:"ADA464FD-6291-42EF-AB16-62EE1A441F1F",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO (Ene-Abr 2026)",subtotal:300000,iva:48000,total:348000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032153"},
+  {id:21,folio:"379",uuid:"249D8392-08FA-4101-892C-E20A687B93F6",fecha:"2026-05-04",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing + Campañas TikTok/Digital Mar",subtotal:21933,iva:3509.28,total:25442.28,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:22,folio:"380",uuid:"3D3563B9-31F3-48B7-B212-B68EE409916A",fecha:"2026-05-04",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing + Campaña RAAF Mar",subtotal:25566,iva:4090.56,total:29656.56,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:23,folio:"381",uuid:"0C7CF036-3452-4D08-ADE6-0444FED0D0DA",fecha:"2026-05-04",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:24,folio:"382",uuid:"54CC858A-BAC9-44DF-8660-215202D470FF",fecha:"2026-05-11",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032424"},
+  {id:25,folio:"383",uuid:"3B25928B-2682-45C1-A489-4A00C09DCBC2",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO — Diseño multimarca",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032606"},
+  {id:26,folio:"384",uuid:"C264E61B-B48A-42DE-9ABE-5152770F4D05",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:50000,iva:8000,total:58000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:27,folio:"385",uuid:"6B5E123D-5D28-4ACD-B6AE-1D25D7A7A18C",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:28,folio:"386",uuid:"2259D14C-FF8B-4BF9-8040-3DEEA2747078",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:29,folio:"387",uuid:"CDDD4339-5AF6-48F7-A8AF-B4A9619CAEEE",fecha:"2026-05-20",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:30,folio:"388",uuid:"B4539520-5D01-40B4-A641-F4C48AC73D55",fecha:"2026-05-20",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:31,folio:"389",uuid:"1D372AA2-390B-400B-B52F-492CDBF0B823",fecha:"2026-05-20",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:32,folio:"390",uuid:"CDE17E2E-FE7D-474B-B842-319B6968082B",fecha:"2026-05-20",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+];
+
+const CLIENTES_CATALOG = {
+  'MAD841018U49':{name:'LA MADRILEÑA',regimen:'623',cond:30,requiresOC:true},
+  'ATR050303H42':{name:'ALDAFA TRANSPORTES',regimen:'624',cond:30,requiresOC:false},
+  'RSL180402KH6':{name:'RAAF SERVICIOS LOGISTICOS',regimen:'601',cond:30,requiresOC:false},
+  'NME171017UI2':{name:'NUEVA MUSICA ESENCIAL',regimen:'601',cond:30,requiresOC:false},
+  'DIF211028G62':{name:'DIFERENCIARTE',regimen:'601',cond:30,requiresOC:false},
+  'CES801003T12':{name:'CESANTONI',regimen:'601',cond:30,requiresOC:false},
+  'PSO820923UH8':{name:'LA PUERTA DEL SOL',regimen:'601',cond:30,requiresOC:false},
+};
+
+// Inicializar: si no hay datos en localStorage o el seed tiene más registros, cargar seed
+let facturas = JSON.parse(localStorage.getItem('tdi_facturas')||'null');
+if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
+  // Preservar estatus de pago de registros existentes
+  const existing = {};
+  if(facturas) facturas.forEach(f=>{ existing[f.folio]=f; });
+  facturas = SEED_DATA.map(f=>({
+    ...f,
+    createdAt: existing[f.folio]?.createdAt||new Date().toISOString(),
+    estatusPago: existing[f.folio]?.estatusPago||f.estatusPago,
+    fechaPago:   existing[f.folio]?.fechaPago||f.fechaPago,
+    montoPago:   existing[f.folio]?.montoPago||f.montoPago,
+    fechaComplemento: existing[f.folio]?.fechaComplemento||f.fechaComplemento,
+    fechaPagoComp:    existing[f.folio]?.fechaPagoComp||'',
+  }));
+  localStorage.setItem('tdi_facturas',JSON.stringify(facturas));
+}
+
+let pendingFactura=null,pendingOC=null,editingId=null,selectedStatus=null;
+function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
+
+document.getElementById('topbar-date').textContent=
+  new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+function showView(id,el){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('view-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  if(id==='dashboard') renderDashboard();
+  if(id==='facturas')  renderFacturasTable();
+  if(id==='clientes')  renderClientes();
+  if(id==='alertas')   renderAlertas();
+  if(id==='nueva')     resetNueva();
+}
+
+function toast(msg,emoji='✅'){
+  const t=document.getElementById('toast');
+  t.innerHTML=emoji+' '+msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function fmt(n){return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+function isVencido(f){
+  if(f.estatusPago!=='pendiente') return false;
+  const d=new Date(f.fecha);if(!d) return false;
+  return (Date.now()-d.getTime())>30*24*3600*1000;
+}
+function isProximoVencer(f){
+  if(f.estatusPago!=='pendiente') return false;
+  const d=new Date(f.fecha);if(!d) return false;
+  const diff=30*24*3600*1000-(Date.now()-d.getTime());
+  return diff>0&&diff<=5*24*3600*1000;
+}
+function statusBadge(f){
+  if(isVencido(f))                    return '<span class="badge badge-red">❌ Vencida</span>';
+  if(f.estatusPago==='pagado')        return '<span class="badge badge-green">✅ Pagado</span>';
+  if(f.estatusPago==='complemento')   return '<span class="badge badge-green">✅ Pagado</span>';
+  return '<span class="badge badge-yellow">⏳ Pendiente</span>';
+}
+function complementoBadge(f){
+  if(f.estatusPago==='complemento')   return '<span class="badge badge-purple">📄 Elaborado</span>';
+  if(f.fechaComplemento)              return '<span class="badge badge-purple">📄 Elaborado</span>';
+  return '<span class="badge badge-gray">—</span>';
+}
+
+function renderDashboard(){
+  const total    =facturas.reduce((s,f)=>s+f.total,0);
+  const cobrado  =facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').reduce((s,f)=>s+f.total,0);
+  const pendiente=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).reduce((s,f)=>s+f.total,0);
+  const vencido  =facturas.filter(f=>isVencido(f)).reduce((s,f)=>s+f.total,0);
+  document.getElementById('stat-total').textContent=fmt(total);
+  document.getElementById('stat-count').textContent=facturas.length+' facturas';
+  document.getElementById('stat-cobrado').textContent=fmt(cobrado);
+  document.getElementById('stat-cobrado-count').textContent=facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').length+' facturas';
+  document.getElementById('stat-pendiente').textContent=fmt(pendiente);
+  document.getElementById('stat-pendiente-count').textContent=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).length+' facturas';
+  document.getElementById('stat-vencido').textContent=fmt(vencido);
+  document.getElementById('stat-vencido-count').textContent=facturas.filter(f=>isVencido(f)).length+' facturas';
+  const proximas=facturas.filter(isProximoVencer);
+  const alertBox=document.getElementById('alerts-box');
+  if(proximas.length){
+    alertBox.style.display='block';
+    document.getElementById('alerts-list').innerHTML=proximas.map(f=>`<div class="alert-item">Factura ${f.folio} · ${f.cliente} · <span>${fmt(f.total)}</span></div>`).join('');
+  } else { alertBox.style.display='none'; }
+  const tbody=document.getElementById('dash-table-body');
+  tbody.innerHTML=facturas.map(f=>`<tr>
+    <td class="mono">${f.folio}</td>
+    <td class="mono">${f.fecha}</td>
+    <td>${f.cliente}</td>
+    <td class="mono"><strong>${fmt(f.total)}</strong></td>
+    <td>${statusBadge(f)}</td>
+    <td class="mono">${f.oc||'—'}</td>
+  </tr>`).join('');
+}
+
+function renderFacturasTable(){
+  const search =document.getElementById('search-input').value.toLowerCase();
+  const cliente=document.getElementById('filter-cliente').value;
+  const status =document.getElementById('filter-status').value;
+  const mes    =document.getElementById('filter-mes').value;
+
+  const selC=document.getElementById('filter-cliente');
+  if(selC.children.length<=1){
+    [...new Set(facturas.map(f=>f.rfcReceptor))].forEach(rfc=>{
+      const o=document.createElement('option');o.value=rfc;
+      o.textContent=CLIENTES_CATALOG[rfc]?.name||rfc;selC.appendChild(o);
+    });
+  }
+  const selM=document.getElementById('filter-mes');
+  if(selM.children.length<=1){
+    [...new Set(facturas.map(f=>f.fecha?.substring(0,7)).filter(Boolean))].sort().reverse().forEach(m=>{
+      const o=document.createElement('option');o.value=m;o.textContent=m;selM.appendChild(o);
+    });
+  }
+
+  let data=facturas.filter(f=>{
+    if(search&&!((f.folio||'').toLowerCase().includes(search)||(f.cliente||'').toLowerCase().includes(search)||(f.oc||'').toLowerCase().includes(search))) return false;
+    if(cliente&&f.rfcReceptor!==cliente) return false;
+    if(mes&&!f.fecha?.startsWith(mes)) return false;
+    if(status==='vencido'&&!isVencido(f)) return false;
+    if(status&&status!=='vencido'&&f.estatusPago!==status) return false;
+    return true;
+  });
+
+  const tbody=document.getElementById('facturas-table-body');
+  if(!data.length){tbody.innerHTML='<tr><td colspan="15" class="empty">No hay facturas que coincidan</td></tr>';return;}
+  tbody.innerHTML=data.map(f=>`<tr>
+    <td class="mono">${f.folio}</td>
+    <td class="mono" style="font-size:.65rem">${(f.uuid||'').substring(0,13)}…</td>
+    <td class="mono">${f.fecha}</td>
+    <td>${f.cliente}</td>
+    <td class="mono" style="font-size:.7rem">${f.rfcReceptor}</td>
+    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${f.descripcion}">${f.descripcion}</td>
+    <td class="mono">${fmt(f.subtotal)}</td>
+    <td class="mono">${fmt(f.iva)}</td>
+    <td class="mono"><strong>${fmt(f.total)}</strong></td>
+    <td class="mono">${f.oc||'—'}</td>
+    <td><span class="badge badge-green">✅ Vigente</span></td>
+    <td>${statusBadge(f)}</td>
+    <td class="mono">${f.fechaPago||'—'}</td>
+    <td>${complementoBadge(f)}${f.fechaComplemento?`<div style="font-size:.65rem;color:var(--muted);font-family:var(--mono);margin-top:.15rem">${f.fechaComplemento}</div>`:''}</td>
+    <td><button class="btn btn-outline" style="padding:.3rem .7rem;font-size:.7rem" onclick="openModal(${f.id})">Editar</button></td>
+  </tr>`).join('');
+}
+
+function openModal(id){
+  editingId=id;
+  const f=facturas.find(x=>x.id===id);
+  document.getElementById('modal-folio').textContent=`Factura ${f.folio} · ${f.cliente} · ${fmt(f.total)}`;
+  selectedStatus=f.estatusPago||'pendiente';
+  highlightStatus(selectedStatus);
+  document.getElementById('input-fecha-pago').value=f.fechaPago||'';
+  document.getElementById('input-monto-pago').value=f.montoPago||'';
+  document.getElementById('input-fecha-pago-comp').value=f.fechaPagoComp||f.fechaPago||'';
+  document.getElementById('input-fecha-complemento').value=f.fechaComplemento||'';
+  document.getElementById('status-modal').classList.add('open');
+}
+function closeModal(){document.getElementById('status-modal').classList.remove('open');editingId=null;selectedStatus=null;}
+function selectStatus(s){selectedStatus=s;highlightStatus(s);}
+function highlightStatus(s){
+  ['pendiente','pagado','complemento'].forEach(x=>{
+    document.getElementById('opt-'+x).classList.toggle('selected',x===s);
+  });
+  document.getElementById('extra-pagado').classList.toggle('show',s==='pagado');
+  document.getElementById('extra-complemento').classList.toggle('show',s==='complemento');
+}
+function saveStatus(){
+  if(!editingId||!selectedStatus) return;
+  const f=facturas.find(x=>x.id===editingId);
+  f.estatusPago=selectedStatus;
+  if(selectedStatus==='pagado'){f.fechaPago=document.getElementById('input-fecha-pago').value;f.montoPago=document.getElementById('input-monto-pago').value;}
+  if(selectedStatus==='complemento'){f.fechaPagoComp=document.getElementById('input-fecha-pago-comp').value;f.fechaComplemento=document.getElementById('input-fecha-complemento').value;if(f.fechaPagoComp&&!f.fechaPago) f.fechaPago=f.fechaPagoComp;}
+  save();closeModal();toast('Estatus actualizado');
+  renderFacturasTable();renderDashboard();
+}
+
+function renderClientes(){
+  const grid=document.getElementById('clients-grid');
+  grid.innerHTML=Object.entries(CLIENTES_CATALOG).map(([rfc,c])=>{
+    const fs=facturas.filter(f=>f.rfcReceptor===rfc);
+    const total=fs.reduce((s,f)=>s+f.total,0);
+    return `<div class="client-card">
+      <div class="client-name">${c.name}</div>
+      <div class="client-rfc">${rfc} · Reg. ${c.regimen}</div>
+      <div style="margin-bottom:.75rem">
+        ${c.requiresOC?'<span class="badge badge-purple">Requiere OC</span>':'<span class="badge badge-gray">Solo factura</span>'}
+        <span class="badge badge-gray" style="margin-left:.25rem">Pago ${c.cond} días</span>
+      </div>
+      <div class="client-stats">
+        <div class="client-stat"><div class="client-stat-val">${fs.length}</div><div class="client-stat-lbl">Facturas</div></div>
+        <div class="client-stat"><div class="client-stat-val" style="font-size:.85rem">${fmt(total)}</div><div class="client-stat-lbl">Total</div></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// PDF upload para nuevas facturas
+async function extractText(file){
+  const ab=await file.arrayBuffer();
+  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let text='';
+  for(let i=1;i<=pdf.numPages;i++){
+    const pg=await pdf.getPage(i);
+    const tc=await pg.getTextContent();
+    text+=tc.items.map(x=>x.str).join(' ')+'\n';
+  }
+  return text;
+}
+function parseFactura(text){
+  const get=(patterns)=>{for(const p of patterns){const m=text.match(p);if(m) return m[1]?.trim();}return '';};
+  const uuid=get([/([0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12})/i]);
+  const fecha=get([/(\d{4}-\d{2}-\d{2})T/]);
+  const rfcR=get([/RFC:\s*((?!MTD)[A-Z]{3,4}\d{6}[A-Z0-9]{3})/]);
+  const folioM=text.match(/(?:^|\s)(\d{3,4})\s/m);
+  const folio=folioM?folioM[1]:'';
+  const cliente=CLIENTES_CATALOG[rfcR]?.name||rfcR||'';
+  const desc=get([/SERVICIO[^\n]{3,60}/i,/FEE[^\n]{3,40}/i])||'Servicios de Marketing';
+  // Extraccion robusta de montos — busca la seccion de totales del CFDI
+  const toMXN=s=>parseFloat((s||'0').replace(/,/g,''));
+  const subtotalM=text.match(/Subtotal\s+([\d,]+\.\d{2})\s+MXN/i);
+  const ivaM    =text.match(/IVAT?\s+[\d.]{3,10}\s+([\d,]+\.\d{2})\s+MXN/i);
+  const totalM  =text.match(/\bTotal\s+([\d,]+\.\d{2})\s+MXN/i);
+  // Fallback: si no matchea con MXN, usar los ultimos 3 numeros grandes del doc
+  const allNums=[...text.matchAll(/([\d]{1,3}(?:,\d{3})*\.\d{2})/g)]
+    .map(m=>parseFloat(m[1].replace(/,/g,''))).filter(n=>n>=100);
+  const subtotal=subtotalM?toMXN(subtotalM[1]):(allNums.length>=3?allNums[allNums.length-3]:0);
+  const iva     =ivaM    ?toMXN(ivaM[1])    :(allNums.length>=2?allNums[allNums.length-2]:0);
+  const total   =totalM  ?toMXN(totalM[1])  :(allNums.length>=1?allNums[allNums.length-1]:0);
+  return {folio,uuid,fecha,rfcReceptor:rfcR,cliente,descripcion:desc.trim().substring(0,80),
+    subtotal,iva,total,
+    estatusSAT:'vigente',estatusPago:'pendiente',fechaPago:'',montoPago:'',fechaComplemento:'',oc:'',
+    createdAt:new Date().toISOString()};
+}
+function parseOC(text){
+  const toMXN=s=>parseFloat((s||'0').replace(/,/g,''));
+  const ocM=text.match(/(OCMAD\d+)/);
+  const oc=ocM?ocM[1]:'';
+  const subtotalM=text.match(/Subtotal:\s*([\d,]+\.\d{2})/i);
+  const totalM=text.match(/Total:\s*([\d,]+\.\d{2})/i);
+  const ivaM=text.match(/IVA:\s*([\d,]+\.\d{2})/i);
+  const subtotal=subtotalM?toMXN(subtotalM[1]):0;
+  const total=totalM?toMXN(totalM[1]):0;
+  const iva=ivaM?toMXN(ivaM[1]):0;
+  return {oc,subtotal,iva,total};
+}
+function handleDrop(ev,type){ev.preventDefault();document.getElementById('drop-'+type).classList.remove('drag');const f=ev.dataTransfer.files[0];if(f) processFile(f,type);}
+function handleFile(input,type){if(input.files[0]) processFile(input.files[0],type);}
+async function processFile(file,type){
+  try{
+    const text=await extractText(file);
+    if(type==='factura'){pendingFactura=parseFactura(text);showPreviewFactura();}
+    else{pendingOC=parseOC(text);showPreviewOC();}
+  }catch(e){toast('Error al leer el PDF','❌');}
+}
+function showPreviewFactura(){
+  const f=pendingFactura;
+  document.getElementById('preview-factura-grid').innerHTML=[
+    ['Folio',f.folio||'—'],['UUID',(f.uuid||'—').substring(0,20)+'…'],
+    ['Fecha',f.fecha||'—'],['RFC',f.rfcReceptor||'—'],
+    ['Cliente',f.cliente||'—'],['Subtotal',fmt(f.subtotal)],
+    ['IVA',fmt(f.iva)],['Total',fmt(f.total)],
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  document.getElementById('preview-factura').style.display='block';
+  document.getElementById('save-section').style.display='block';
+}
+function showPreviewOC(){
+  const o=pendingOC;
+  document.getElementById('preview-oc-grid').innerHTML=[
+    ['No. OC',o.oc||'—'],['Subtotal OC',fmt(o.subtotal)],['IVA OC',fmt(o.iva)],['Total OC c/IVA',fmt(o.total)],
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  document.getElementById('preview-oc').style.display='block';
+  if(pendingFactura){
+    // Comparar total OC con total factura (ambos con IVA)
+    const ocTotal=o.total||o.subtotal;
+    const facTotal=pendingFactura.total;
+    const ok=Math.abs(facTotal-ocTotal)<1;
+    document.getElementById('match-result').innerHTML=`<div class="match-badge ${ok?'match-ok':'match-err'}">${ok?'✅ Montos coinciden · Total OC y Factura: '+fmt(facTotal):'⚠️ Montos no coinciden · OC: '+fmt(ocTotal)+' / Factura: '+fmt(facTotal)}</div>`;
+  }
+}
+function saveFactura(){
+  if(!pendingFactura) return;
+  if(pendingOC){pendingFactura.oc=pendingOC.oc;pendingFactura.totalOC=pendingOC.total;}
+  pendingFactura.id=Date.now();
+  facturas.unshift(pendingFactura);
+  save();toast('Factura '+pendingFactura.folio+' guardada');
+  resetNueva();renderDashboard();
+}
+function resetNueva(){
+  pendingFactura=null;pendingOC=null;
+  document.getElementById('preview-factura').style.display='none';
+  document.getElementById('preview-oc').style.display='none';
+  document.getElementById('save-section').style.display='none';
+  document.getElementById('input-factura').value='';
+  document.getElementById('input-oc').value='';
+}
+
+function exportExcel(){
+  const rows=[['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento']];
+  facturas.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'']));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Facturas');
+  XLSX.writeFile(wb,'Control_Facturacion_TDI.xlsx');
+  toast('Excel exportado');
+}
+
+renderDashboard();
+
+// ── EMAILJS ──────────────────────────────────────────────────────────────────
+const EJS_SERVICE  = 'service_qlidns7';
+const EJS_TEMPLATE = 'bajyqeo';
+const EJS_PUBKEY   = 'asd7_t22C934wMz9X';
+emailjs.init(EJS_PUBKEY);
+
+// ── ALERTAS CONFIG ────────────────────────────────────────────────────────────
+let alertConfig = JSON.parse(localStorage.getItem('tdi_alertas')||'{}');
+Object.keys(CLIENTES_CATALOG).forEach(rfc=>{
+  if(!alertConfig[rfc]) alertConfig[rfc]={active:false,dia:1};
+});
+
+function saveAlertConfig(){
+  Object.keys(CLIENTES_CATALOG).forEach(rfc=>{
+    const chk=document.getElementById('alert-chk-'+rfc);
+    const dia=document.getElementById('alert-dia-'+rfc);
+    if(chk&&dia) alertConfig[rfc]={active:chk.checked,dia:parseInt(dia.value)||1};
+  });
+  localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig));
+  toast('Configuración guardada');
+}
+
+function renderAlertas(){
+  const grid=document.getElementById('alertas-grid');
+  grid.innerHTML=Object.entries(CLIENTES_CATALOG).map(([rfc,c])=>{
+    const cfg=alertConfig[rfc]||{active:false,dia:1};
+    const hoy=new Date();
+    const proxFecha=new Date(hoy.getFullYear(),hoy.getMonth(),cfg.dia);
+    if(proxFecha<=hoy) proxFecha.setMonth(proxFecha.getMonth()+1);
+    const diff=Math.ceil((proxFecha-hoy)/(1000*60*60*24));
+    const status=cfg.active?(diff<=3?'⚠️ Alerta en '+diff+' días':'✅ Próxima: día '+cfg.dia):'—';
+    return `<div class="alert-cfg-card">
+      <div class="alert-cfg-header">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="alert-status-dot ${cfg.active?'dot-active':'dot-inactive'}"></span>
+          <div class="alert-cfg-name">${c.name}</div>
+          <span style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">${rfc}</span>
+        </div>
+        <div class="alert-cfg-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="alert-chk-${rfc}" ${cfg.active?'checked':''} onchange="saveAlertConfig();renderAlertas()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Activa</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem">
+          <span style="color:var(--muted)">Facturar el día</span>
+          <input class="alert-day-input" type="number" min="1" max="28" id="alert-dia-${rfc}" value="${cfg.dia}" onchange="saveAlertConfig()">
+          <span style="color:var(--muted)">de cada mes</span>
+        </div>
+        <span style="font-size:.78rem;color:${cfg.active&&diff<=3?'#d97706':'var(--muted)'}">${status}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function checkAndSendAlerts(){
+  const log=document.getElementById('alert-log');
+  if(log) log.textContent='Verificando alertas…';
+  const hoy=new Date();
+  const enviados=[];
+  for(const [rfc,cfg] of Object.entries(alertConfig)){
+    if(!cfg.active) continue;
+    const proxFecha=new Date(hoy.getFullYear(),hoy.getMonth(),cfg.dia);
+    if(proxFecha<=hoy) proxFecha.setMonth(proxFecha.getMonth()+1);
+    const diff=Math.ceil((proxFecha-hoy)/(1000*60*60*24));
+    if(diff<=3&&diff>=0){
+      const cliente=CLIENTES_CATALOG[rfc]?.name||rfc;
+      const fechaStr=proxFecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+      try{
+        await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
+          cliente,fecha:fechaStr,
+          dias:diff===0?'HOY':diff+' días',
+          name:'TDI Control',
+          email:'francisco@marketingtdi.com',
+          title:'Recordatorio Facturación'
+        });
+        enviados.push(cliente+' (en '+diff+' días)');
+      }catch(e){console.warn('EmailJS error:',e);}
+    }
+  }
+  if(log){
+    if(enviados.length) log.innerHTML='✅ Alertas enviadas:<br>'+enviados.map(x=>'· '+x).join('<br>');
+    else log.textContent='ℹ️ Sin alertas próximas esta vez.';
+  }
+  if(enviados.length) toast('Alertas enviadas: '+enviados.length,'📧');
+}
+
+// ── CONCILIACIÓN ──────────────────────────────────────────────────────────────
+function handleConcDrop(ev){
+  ev.preventDefault();
+  document.getElementById('conc-drop').classList.remove('drag');
+  const f=ev.dataTransfer.files[0];
+  if(f) processBancoPDF(f);
+}
+function handleConcFile(input){if(input.files[0]) processBancoPDF(input.files[0]);}
+
+async function processBancoPDF(file){
+  document.getElementById('conc-loading').style.display='block';
+  document.getElementById('conc-results').innerHTML='';
+  try{
+    const text=await extractText(file);
+    const movimientos=parseBBVA(text);
+    renderConciliacion(movimientos);
+  }catch(e){
+    document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error: '+e.message+'</div>';
+  }
+  document.getElementById('conc-loading').style.display='none';
+}
+
+function parseBBVA(text){
+  const movs=[];
+  const lines=text.split('\n');
+  for(const line of lines){
+    const m=line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
+    if(m){const monto=parseFloat(m[3].replace(/,/g,''));if(monto>0) movs.push({fecha:m[1],desc:m[2].trim(),monto});}
+    const m2=line.match(/(\d{2}\/\d{2})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
+    if(!m&&m2){const monto=parseFloat(m2[3].replace(/,/g,''));if(monto>500) movs.push({fecha:m2[1],desc:m2[2].trim(),monto});}
+  }
+  return movs;
+}
+
+function renderConciliacion(movimientos){
+  const pendientes=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
+  const exactos=[],parciales=[],sinMatch=[];
+  movimientos.forEach(mov=>{
+    const match=pendientes.find(f=>Math.abs(f.total-mov.monto)<1);
+    const parcial=!match&&pendientes.find(f=>Math.abs(f.total-mov.monto)/f.total<0.05);
+    if(match) exactos.push({mov,factura:match});
+    else if(parcial) parciales.push({mov,factura:parcial});
+  });
+  pendientes.forEach(f=>{
+    if(!exactos.find(x=>x.factura.id===f.id)&&!parciales.find(x=>x.factura.id===f.id)) sinMatch.push(f);
+  });
+  const totalAbonos=movimientos.reduce((s,m)=>s+m.monto,0);
+  let html=`<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Abonos leídos</div><div class="stat-value green">${movimientos.length}</div><div class="stat-sub">${fmt(totalAbonos)}</div></div>
+    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Match exacto</div><div class="stat-value green">${exactos.length}</div></div>
+    <div class="stat-card yellow" style="flex:1;min-width:140px"><div class="stat-label">Match parcial</div><div class="stat-value yellow">${parciales.length}</div></div>
+    <div class="stat-card red" style="flex:1;min-width:140px"><div class="stat-label">Sin abono</div><div class="stat-value red">${sinMatch.length}</div></div>
+  </div>`;
+  if(exactos.length){
+    html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias exactas</div>`;
+    exactos.forEach(({mov,factura})=>{
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
+      <button class="conc-apply-btn" id="conc-btn-${factura.id}" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
+    });html+='</div>';
+  }
+  if(parciales.length){
+    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Coincidencias parciales — revisar</div>`;
+    parciales.forEach(({mov,factura})=>{
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente} · Factura: ${fmt(factura.total)}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
+      <button class="conc-apply-btn" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
+    });html+='</div>';
+  }
+  if(sinMatch.length){
+    html+=`<div class="conc-section conc-err"><div class="conc-section-title">❌ Facturas pendientes sin abono</div>`;
+    sinMatch.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
+    html+='</div>';
+  }
+  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en el PDF. Verifica que sea un estado de cuenta BBVA México.</div>';
+  document.getElementById('conc-results').innerHTML=html;
+}
+
+function aplicarConciliacion(facturaId,fechaMov,monto){
+  const f=facturas.find(x=>x.id===facturaId);if(!f) return;
+  let fechaPago='';
+  const p=fechaMov.split('/');
+  if(p.length===3) fechaPago=`${p[2]}-${p[1]}-${p[0]}`;
+  else if(p.length===2){const hoy=new Date();fechaPago=`${hoy.getFullYear()}-${p[1]}-${p[0]}`;}
+  f.estatusPago='pagado';f.fechaPago=fechaPago;f.montoPago=monto;
+  save();
+  const btn=document.getElementById('conc-btn-'+facturaId);
+  if(btn) btn.outerHTML='<span class="conc-applied">✅ Aplicado</span>';
+  toast('Folio '+f.folio+' marcado como pagado');
+  renderDashboard();
+}
+
+// Verificar alertas al cargar (silencioso)
+setTimeout(()=>checkAndSendAlerts(),3000);
+</script>
+</body>
+</html>
