@@ -7,8 +7,42 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
-:root {
+.conc-drop{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1.5rem;}
+.conc-drop:hover,.conc-drop.drag{border-color:var(--accent);background:#f5f3ff;}
+.conc-icon{font-size:3rem;margin-bottom:.75rem;}
+.conc-title{font-weight:700;font-size:1rem;margin-bottom:.3rem;}
+.conc-sub{font-size:.75rem;color:var(--muted);}
+.conc-results{margin-top:1.5rem;}
+.conc-section{margin-bottom:1.5rem;}
+.conc-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;padding:.4rem .75rem;border-radius:6px;}
+.conc-ok .conc-section-title{background:#d1fae5;color:#065f46;}
+.conc-warn .conc-section-title{background:#fef3c7;color:#92400e;}
+.conc-err .conc-section-title{background:#fee2e2;color:#991b1b;}
+.conc-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;font-size:.8rem;}
+.conc-row-info{display:flex;flex-direction:column;gap:.1rem;}
+.conc-row-monto{font-family:var(--mono);font-weight:700;color:var(--green);}
+.conc-row-fecha{font-family:var(--mono);font-size:.7rem;color:var(--muted);}
+.conc-apply-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;cursor:pointer;}
+.conc-apply-btn:hover{opacity:.85;}
+.conc-applied{background:#d1fae5;color:#065f46;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;}
+.alert-cfg-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.alert-cfg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.alert-cfg-name{font-weight:700;font-size:.95rem;}
+.alert-cfg-toggle{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);}
+.toggle-switch{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:20px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+input:checked+.toggle-slider{background:var(--accent);}
+input:checked+.toggle-slider:before{transform:translateX(16px);}
+.alert-day-input{width:60px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.85rem;font-family:var(--mono);text-align:center;outline:none;}
+.alert-day-input:focus{border-color:var(--accent);}
+.alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot-active{background:var(--green);}
+.dot-inactive{background:#cbd5e1;}
+</style>
   --bg:#f4f6f9;--surface:#ffffff;--card:#ffffff;--border:#e2e7ef;
   --accent:#5b4fcf;--accent2:#e8445a;--green:#0e9f6e;--yellow:#d97706;
   --red:#dc2626;--text:#1a1d23;--muted:#6b7280;
@@ -156,6 +190,8 @@ tr:hover td{background:#f8faff;}
   <div class="nav-section">
     <div class="nav-label">Administración</div>
     <div class="nav-item" onclick="showView('clientes',this)"><span class="nav-icon">🏢</span> Clientes</div>
+    <div class="nav-item" onclick="showView('alertas',this)"><span class="nav-icon">🔔</span> Alertas</div>
+    <div class="nav-item" onclick="showView('conciliacion',this)"><span class="nav-icon">🏦</span> Conciliación</div>
   </div>
 </nav>
 <main class="main">
@@ -246,6 +282,45 @@ tr:hover td{background:#f8faff;}
     <div class="clients-grid" id="clients-grid"></div>
   </div>
 
+  <!-- ALERTAS -->
+  <div id="view-alertas" class="view">
+    <div class="page-header">
+      <div class="page-title">Alertas de Facturación</div>
+      <div class="page-sub">Configura el día del mes en que debes facturar a cada cliente — recibirás un correo 3 días antes</div>
+    </div>
+    <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.82rem;color:#4c1d95;">
+      📧 Los recordatorios se enviarán a <strong>francisco@marketingtdi.com</strong> · 3 días antes de la fecha configurada · Abre el portal para activar la revisión
+    </div>
+    <div id="alertas-grid"></div>
+    <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="saveAlertConfig();checkAndSendAlerts()">💾 Guardar y verificar alertas ahora</button>
+      <button class="btn btn-outline" onclick="checkAndSendAlerts()">🔍 Verificar alertas sin guardar</button>
+    </div>
+    <div id="alert-log" style="margin-top:1rem;font-size:.8rem;color:var(--muted);"></div>
+  </div>
+
+  <!-- CONCILIACIÓN -->
+  <div id="view-conciliacion" class="view">
+    <div class="page-header">
+      <div class="page-title">Conciliación Bancaria</div>
+      <div class="page-sub">Sube el estado de cuenta BBVA y cruzamos automáticamente los abonos contra tus facturas pendientes</div>
+    </div>
+    <div class="conc-drop" id="conc-drop"
+      onclick="document.getElementById('conc-input').click()"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleConcDrop(event)">
+      <div class="conc-icon">🏦</div>
+      <div class="conc-title">Estado de Cuenta BBVA</div>
+      <div class="conc-sub">Arrastra el PDF o haz clic para seleccionar · Solo BBVA México</div>
+      <input type="file" id="conc-input" style="display:none" accept=".pdf" onchange="handleConcFile(this)">
+    </div>
+    <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">
+      ⏳ Leyendo estado de cuenta…
+    </div>
+    <div id="conc-results" class="conc-results"></div>
+  </div>
+
 </main>
 </div>
 
@@ -317,6 +392,13 @@ const SEED_DATA = [
   {id:23,folio:"381",uuid:"0C7CF036-3452-4D08-ADE6-0444FED0D0DA",fecha:"2026-05-04",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
   {id:24,folio:"382",uuid:"54CC858A-BAC9-44DF-8660-215202D470FF",fecha:"2026-05-11",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032424"},
   {id:25,folio:"383",uuid:"3B25928B-2682-45C1-A489-4A00C09DCBC2",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO — Diseño multimarca",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032606"},
+  {id:26,folio:"384",uuid:"C264E61B-B48A-42DE-9ABE-5152770F4D05",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:50000,iva:8000,total:58000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:27,folio:"385",uuid:"6B5E123D-5D28-4ACD-B6AE-1D25D7A7A18C",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:28,folio:"386",uuid:"2259D14C-FF8B-4BF9-8040-3DEEA2747078",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:29,folio:"387",uuid:"CDDD4339-5AF6-48F7-A8AF-B4A9619CAEEE",fecha:"2026-05-20",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:30,folio:"388",uuid:"B4539520-5D01-40B4-A641-F4C48AC73D55",fecha:"2026-05-20",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:31,folio:"389",uuid:"1D372AA2-390B-400B-B52F-492CDBF0B823",fecha:"2026-05-20",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:32,folio:"390",uuid:"CDE17E2E-FE7D-474B-B842-319B6968082B",fecha:"2026-05-20",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
 ];
 
 const CLIENTES_CATALOG = {
@@ -329,10 +411,21 @@ const CLIENTES_CATALOG = {
   'PSO820923UH8':{name:'LA PUERTA DEL SOL',regimen:'601',cond:30,requiresOC:false},
 };
 
-// Inicializar: si no hay datos en localStorage, cargar seed
+// Inicializar: si no hay datos en localStorage o el seed tiene más registros, cargar seed
 let facturas = JSON.parse(localStorage.getItem('tdi_facturas')||'null');
-if(!facturas||facturas.length===0){
-  facturas = SEED_DATA.map(f=>({...f,createdAt:new Date().toISOString()}));
+if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
+  // Preservar estatus de pago de registros existentes
+  const existing = {};
+  if(facturas) facturas.forEach(f=>{ existing[f.folio]=f; });
+  facturas = SEED_DATA.map(f=>({
+    ...f,
+    createdAt: existing[f.folio]?.createdAt||new Date().toISOString(),
+    estatusPago: existing[f.folio]?.estatusPago||f.estatusPago,
+    fechaPago:   existing[f.folio]?.fechaPago||f.fechaPago,
+    montoPago:   existing[f.folio]?.montoPago||f.montoPago,
+    fechaComplemento: existing[f.folio]?.fechaComplemento||f.fechaComplemento,
+    fechaPagoComp:    existing[f.folio]?.fechaPagoComp||'',
+  }));
   localStorage.setItem('tdi_facturas',JSON.stringify(facturas));
 }
 
@@ -350,6 +443,7 @@ function showView(id,el){
   if(id==='dashboard') renderDashboard();
   if(id==='facturas')  renderFacturasTable();
   if(id==='clientes')  renderClientes();
+  if(id==='alertas')   renderAlertas();
   if(id==='nueva')     resetNueva();
 }
 
@@ -626,6 +720,191 @@ function exportExcel(){
 }
 
 renderDashboard();
+
+// ── EMAILJS ──────────────────────────────────────────────────────────────────
+const EJS_SERVICE  = 'service_qlidns7';
+const EJS_TEMPLATE = 'bajyqeo';
+const EJS_PUBKEY   = 'asd7_t22C934wMz9X';
+emailjs.init(EJS_PUBKEY);
+
+// ── ALERTAS CONFIG ────────────────────────────────────────────────────────────
+let alertConfig = JSON.parse(localStorage.getItem('tdi_alertas')||'{}');
+Object.keys(CLIENTES_CATALOG).forEach(rfc=>{
+  if(!alertConfig[rfc]) alertConfig[rfc]={active:false,dia:1};
+});
+
+function saveAlertConfig(){
+  Object.keys(CLIENTES_CATALOG).forEach(rfc=>{
+    const chk=document.getElementById('alert-chk-'+rfc);
+    const dia=document.getElementById('alert-dia-'+rfc);
+    if(chk&&dia) alertConfig[rfc]={active:chk.checked,dia:parseInt(dia.value)||1};
+  });
+  localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig));
+  toast('Configuración guardada');
+}
+
+function renderAlertas(){
+  const grid=document.getElementById('alertas-grid');
+  grid.innerHTML=Object.entries(CLIENTES_CATALOG).map(([rfc,c])=>{
+    const cfg=alertConfig[rfc]||{active:false,dia:1};
+    const hoy=new Date();
+    const proxFecha=new Date(hoy.getFullYear(),hoy.getMonth(),cfg.dia);
+    if(proxFecha<=hoy) proxFecha.setMonth(proxFecha.getMonth()+1);
+    const diff=Math.ceil((proxFecha-hoy)/(1000*60*60*24));
+    const status=cfg.active?(diff<=3?'⚠️ Alerta en '+diff+' días':'✅ Próxima: día '+cfg.dia):'—';
+    return `<div class="alert-cfg-card">
+      <div class="alert-cfg-header">
+        <div style="display:flex;align-items:center;gap:.75rem">
+          <span class="alert-status-dot ${cfg.active?'dot-active':'dot-inactive'}"></span>
+          <div class="alert-cfg-name">${c.name}</div>
+          <span style="font-family:var(--mono);font-size:.7rem;color:var(--muted)">${rfc}</span>
+        </div>
+        <div class="alert-cfg-toggle">
+          <label class="toggle-switch">
+            <input type="checkbox" id="alert-chk-${rfc}" ${cfg.active?'checked':''} onchange="saveAlertConfig();renderAlertas()">
+            <span class="toggle-slider"></span>
+          </label>
+          <span>Activa</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem">
+          <span style="color:var(--muted)">Facturar el día</span>
+          <input class="alert-day-input" type="number" min="1" max="28" id="alert-dia-${rfc}" value="${cfg.dia}" onchange="saveAlertConfig()">
+          <span style="color:var(--muted)">de cada mes</span>
+        </div>
+        <span style="font-size:.78rem;color:${cfg.active&&diff<=3?'#d97706':'var(--muted)'}">${status}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function checkAndSendAlerts(){
+  const log=document.getElementById('alert-log');
+  if(log) log.textContent='Verificando alertas…';
+  const hoy=new Date();
+  const enviados=[];
+  for(const [rfc,cfg] of Object.entries(alertConfig)){
+    if(!cfg.active) continue;
+    const proxFecha=new Date(hoy.getFullYear(),hoy.getMonth(),cfg.dia);
+    if(proxFecha<=hoy) proxFecha.setMonth(proxFecha.getMonth()+1);
+    const diff=Math.ceil((proxFecha-hoy)/(1000*60*60*24));
+    if(diff<=3&&diff>=0){
+      const cliente=CLIENTES_CATALOG[rfc]?.name||rfc;
+      const fechaStr=proxFecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
+      try{
+        await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
+          cliente,fecha:fechaStr,
+          dias:diff===0?'HOY':diff+' días',
+          name:'TDI Control',
+          email:'francisco@marketingtdi.com',
+          title:'Recordatorio Facturación'
+        });
+        enviados.push(cliente+' (en '+diff+' días)');
+      }catch(e){console.warn('EmailJS error:',e);}
+    }
+  }
+  if(log){
+    if(enviados.length) log.innerHTML='✅ Alertas enviadas:<br>'+enviados.map(x=>'· '+x).join('<br>');
+    else log.textContent='ℹ️ Sin alertas próximas esta vez.';
+  }
+  if(enviados.length) toast('Alertas enviadas: '+enviados.length,'📧');
+}
+
+// ── CONCILIACIÓN ──────────────────────────────────────────────────────────────
+function handleConcDrop(ev){
+  ev.preventDefault();
+  document.getElementById('conc-drop').classList.remove('drag');
+  const f=ev.dataTransfer.files[0];
+  if(f) processBancoPDF(f);
+}
+function handleConcFile(input){if(input.files[0]) processBancoPDF(input.files[0]);}
+
+async function processBancoPDF(file){
+  document.getElementById('conc-loading').style.display='block';
+  document.getElementById('conc-results').innerHTML='';
+  try{
+    const text=await extractText(file);
+    const movimientos=parseBBVA(text);
+    renderConciliacion(movimientos);
+  }catch(e){
+    document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error: '+e.message+'</div>';
+  }
+  document.getElementById('conc-loading').style.display='none';
+}
+
+function parseBBVA(text){
+  const movs=[];
+  const lines=text.split('\n');
+  for(const line of lines){
+    const m=line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
+    if(m){const monto=parseFloat(m[3].replace(/,/g,''));if(monto>0) movs.push({fecha:m[1],desc:m[2].trim(),monto});}
+    const m2=line.match(/(\d{2}\/\d{2})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
+    if(!m&&m2){const monto=parseFloat(m2[3].replace(/,/g,''));if(monto>500) movs.push({fecha:m2[1],desc:m2[2].trim(),monto});}
+  }
+  return movs;
+}
+
+function renderConciliacion(movimientos){
+  const pendientes=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
+  const exactos=[],parciales=[],sinMatch=[];
+  movimientos.forEach(mov=>{
+    const match=pendientes.find(f=>Math.abs(f.total-mov.monto)<1);
+    const parcial=!match&&pendientes.find(f=>Math.abs(f.total-mov.monto)/f.total<0.05);
+    if(match) exactos.push({mov,factura:match});
+    else if(parcial) parciales.push({mov,factura:parcial});
+  });
+  pendientes.forEach(f=>{
+    if(!exactos.find(x=>x.factura.id===f.id)&&!parciales.find(x=>x.factura.id===f.id)) sinMatch.push(f);
+  });
+  const totalAbonos=movimientos.reduce((s,m)=>s+m.monto,0);
+  let html=`<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Abonos leídos</div><div class="stat-value green">${movimientos.length}</div><div class="stat-sub">${fmt(totalAbonos)}</div></div>
+    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Match exacto</div><div class="stat-value green">${exactos.length}</div></div>
+    <div class="stat-card yellow" style="flex:1;min-width:140px"><div class="stat-label">Match parcial</div><div class="stat-value yellow">${parciales.length}</div></div>
+    <div class="stat-card red" style="flex:1;min-width:140px"><div class="stat-label">Sin abono</div><div class="stat-value red">${sinMatch.length}</div></div>
+  </div>`;
+  if(exactos.length){
+    html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias exactas</div>`;
+    exactos.forEach(({mov,factura})=>{
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
+      <button class="conc-apply-btn" id="conc-btn-${factura.id}" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
+    });html+='</div>';
+  }
+  if(parciales.length){
+    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Coincidencias parciales — revisar</div>`;
+    parciales.forEach(({mov,factura})=>{
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente} · Factura: ${fmt(factura.total)}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
+      <button class="conc-apply-btn" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
+    });html+='</div>';
+  }
+  if(sinMatch.length){
+    html+=`<div class="conc-section conc-err"><div class="conc-section-title">❌ Facturas pendientes sin abono</div>`;
+    sinMatch.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
+    html+='</div>';
+  }
+  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en el PDF. Verifica que sea un estado de cuenta BBVA México.</div>';
+  document.getElementById('conc-results').innerHTML=html;
+}
+
+function aplicarConciliacion(facturaId,fechaMov,monto){
+  const f=facturas.find(x=>x.id===facturaId);if(!f) return;
+  let fechaPago='';
+  const p=fechaMov.split('/');
+  if(p.length===3) fechaPago=`${p[2]}-${p[1]}-${p[0]}`;
+  else if(p.length===2){const hoy=new Date();fechaPago=`${hoy.getFullYear()}-${p[1]}-${p[0]}`;}
+  f.estatusPago='pagado';f.fechaPago=fechaPago;f.montoPago=monto;
+  save();
+  const btn=document.getElementById('conc-btn-'+facturaId);
+  if(btn) btn.outerHTML='<span class="conc-applied">✅ Aplicado</span>';
+  toast('Folio '+f.folio+' marcado como pagado');
+  renderDashboard();
+}
+
+// Verificar alertas al cargar (silencioso)
+setTimeout(()=>checkAndSendAlerts(),3000);
 </script>
 </body>
 </html>
