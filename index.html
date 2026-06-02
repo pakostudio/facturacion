@@ -303,7 +303,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   <div id="view-conciliacion" class="view">
     <div class="page-header">
       <div class="page-title">Conciliación Bancaria</div>
-      <div class="page-sub">Sube hasta 5 estados de cuenta BBVA a la vez — consolidamos todos los abonos y los cruzamos contra tus facturas pendientes</div>
+      <div class="page-sub">Sube hasta 5 estados de cuenta BBVA a la vez — consolidamos todos los abonos contra tus facturas pendientes</div>
     </div>
     <div class="conc-drop" id="conc-drop"
       onclick="document.getElementById('conc-input').click()"
@@ -316,9 +316,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <input type="file" id="conc-input" style="display:none" accept=".pdf" multiple onchange="handleConcFile(this)">
     </div>
     <div id="conc-file-list" style="margin-bottom:1rem;"></div>
-    <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">
-      ⏳ Leyendo estados de cuenta…
-    </div>
+    <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">⏳ Leyendo estados de cuenta…</div>
     <div id="conc-results" class="conc-results"></div>
   </div>
 
@@ -618,18 +616,20 @@ async function extractText(file){
   for(let i=1;i<=pdf.numPages;i++){
     const pg=await pdf.getPage(i);
     const tc=await pg.getTextContent();
-    // Agrupar items por posición Y para reconstruir líneas reales
+    const items=tc.items;
+    if(!items.length) continue;
+    // Agrupar por posición Y (redondeada a 2px para tolerar variaciones)
     const byY={};
-    for(const item of tc.items){
-      const y=Math.round(item.transform[5]);
+    for(const item of items){
+      if(!item.str.trim()) continue;
+      const y=Math.round(item.transform[5]/2)*2;
       if(!byY[y]) byY[y]=[];
-      byY[y].push(item);
+      byY[y].push({x:item.transform[4],str:item.str});
     }
-    // Ordenar de arriba a abajo y construir líneas
+    // Ordenar líneas de arriba a abajo
     const ys=Object.keys(byY).map(Number).sort((a,b)=>b-a);
     for(const y of ys){
-      const lineItems=byY[y].sort((a,b)=>a.transform[4]-b.transform[4]);
-      const lineText=lineItems.map(it=>it.str).join(' ').trim();
+      const lineText=byY[y].sort((a,b)=>a.x-b.x).map(it=>it.str).join(' ').trim();
       if(lineText) text+=lineText+'\n';
     }
   }
