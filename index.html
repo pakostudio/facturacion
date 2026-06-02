@@ -859,13 +859,82 @@ async function processBancoPDFs(files){
 function parseBBVA(text){
   const movs=[];
   const lines=text.split('\n');
-  for(const line of lines){
-    const m=line.match(/(\d{2}\/\d{2}\/\d{4})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
-    if(m){const monto=parseFloat(m[3].replace(/,/g,''));if(monto>0) movs.push({fecha:m[1],desc:m[2].trim(),monto});}
-    const m2=line.match(/(\d{2}\/\d{2})\s+(.{5,60}?)\s+([\d,]+\.\d{2})\s*$/);
-    if(!m&&m2){const monto=parseFloat(m2[3].replace(/,/g,''));if(monto>500) movs.push({fecha:m2[1],desc:m2[2].trim(),monto});}
+  const meses={'ENE':'01','FEB':'02','MAR':'03','ABR':'04','MAY':'05','JUN':'06',
+               'JUL':'07','AGO':'08','SEP':'09','OCT':'10','NOV':'11','DIC':'12'};
+
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i].trim();
+
+    // Patrón principal BBVA: DD/MES DD/MES T20 SPEI RECIBIDO... monto al final
+    // Ejemplo: "03/FEB 03/FEB T20 SPEI RECIBIDOCITI MEXICO 78,137.14 78,560.20 78,560.20"
+    const m1=line.match(/^(\d{2})\/([A-Z]{3})\s+\d{2}\/[A-Z]{3}\s+\w+\s+.+?\s+([\d,]+\.\d{2})(?:\s+[\d,]+\.\d{2})*\s*$/);
+    if(m1){
+      const dia=m1[1], mes=meses[m1[2]], monto=parseFloat(m1[3].replace(/,/g,''));
+      // Solo abonos (T20 = SPEI RECIBIDO, no T17 = SPEI ENVIADO)
+      if(line.includes('RECIBIDO')&&monto>100){
+        const año=new Date().getFullYear();
+        // Determinar año por mes (si mes > mes actual, es año anterior)
+        const mesNum=parseInt(mes);
+        const mesActual=new Date().getMonth()+1;
+        const añoReal=(mesNum>mesActual)?año-1:año;
+        const fecha=`${dia}/${mes}/${añoReal}`;
+        // Extraer descripción
+        const desc=line.replace(/^\d{2}\/[A-Z]{3}\s+\d{2}\/[A-Z]{3}\s+\w+\s+/,'').replace(/\s+[\d,]+\.\d{2}[\s\d,.]*$/,'').trim().substring(0,50);
+        movs.push({fecha,desc,monto});
+      }
+      continue;
+    }
+
+    // Patrón alternativo: línea solo con fecha y monto al final (sin doble fecha)
+    // Ejemplo: "/FEB 03/FEB T20 SPEI RECIBIDOBANORTE 29,000.00 107,545.12 107,545.12"
+    const m2=line.match(/^\/([A-Z]{3})\s+(\d{2})\/[A-Z]{3}\s+\w+\s+.+?\s+([\d,]+\.\d{2})(?:\s+[\d,]+\.\d{2})*\s*$/);
+    if(m2){
+      const mes2=meses[m2[1]]||'01', dia2=m2[2], monto=parseFloat(m2[3].replace(/,/g,''));
+      if(line.includes('RECIBIDO')&&monto>100){
+        const año=new Date().getFullYear();
+        const mesNum=parseInt(mes2);
+        const mesActual=new Date().getMonth()+1;
+        const añoReal=(mesNum>mesActual)?año-1:año;
+        const fecha=`${dia2}/${mes2}/${añoReal}`;
+        const desc=line.replace(/^\/[A-Z]{3}\s+\d{2}\/[A-Z]{3}\s+\w+\s+/,'').replace(/\s+[\d,]+\.\d{2}[\s\d,.]*$/,'').trim().substring(0,50);
+        movs.push({fecha,desc,monto});
+      }
+      continue;
+    }
+
+    // Patrón para cuando el abono aparece en línea separada después de la descripción
+    // Busca líneas que solo tienen montos y la línea anterior tiene RECIBIDO
+    const m3=line.match(/^([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/);
+    if(m3&&i>0){
+      const prevLine=lines[i-1]||'';
+      if(prevLine.includes('RECIBIDO')){
+        const monto=parseFloat(m3[1].replace(/,/g,''));
+        if(monto>100){
+          // Extraer fecha de línea anterior
+          const fechaM=prevLine.match(/(\d{2})\/([A-Z]{3})/);
+          if(fechaM){
+            const dia=fechaM[1],mes=meses[fechaM[2]]||'01';
+            const año=new Date().getFullYear();
+            const mesNum=parseInt(mes);
+            const mesActual=new Date().getMonth()+1;
+            const añoReal=(mesNum>mesActual)?año-1:año;
+            const fecha=`${dia}/${mes}/${añoReal}`;
+            const desc=prevLine.replace(/^\/?(\d{2})?\/[A-Z]{3}\s+(\d{2}\/[A-Z]{3}\s+)?\w+\s+/,'').trim().substring(0,50);
+            movs.push({fecha,desc,monto});
+          }
+        }
+      }
+    }
   }
-  return movs;
+
+  // Deduplicar por fecha+monto
+  const seen=new Set();
+  return movs.filter(m=>{
+    const key=`${m.fecha}-${m.monto}`;
+    if(seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function renderConciliacion(movimientos, numArchivos){
