@@ -133,6 +133,39 @@ tr:hover td{background:#f8faff;}
 .empty{text-align:center;padding:4rem 2rem;color:var(--muted);font-size:.9rem;}
 .toast{position:fixed;bottom:2rem;right:2rem;background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem 1.25rem;font-size:.85rem;display:flex;align-items:center;gap:.5rem;z-index:300;transform:translateY(100px);opacity:0;transition:all .3s;box-shadow:0 8px 32px rgba(0,0,0,.15);color:var(--text);}
 .toast.show{transform:translateY(0);opacity:1;}
+.conc-drop{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1.5rem;}
+.conc-drop:hover,.conc-drop.drag{border-color:var(--accent);background:#f5f3ff;}
+.conc-icon{font-size:3rem;margin-bottom:.75rem;}
+.conc-title{font-weight:700;font-size:1rem;margin-bottom:.3rem;}
+.conc-sub{font-size:.75rem;color:var(--muted);}
+.conc-results{margin-top:1.5rem;}
+.conc-section{margin-bottom:1.5rem;}
+.conc-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;padding:.4rem .75rem;border-radius:6px;}
+.conc-ok .conc-section-title{background:#d1fae5;color:#065f46;}
+.conc-warn .conc-section-title{background:#fef3c7;color:#92400e;}
+.conc-err .conc-section-title{background:#fee2e2;color:#991b1b;}
+.conc-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;font-size:.8rem;}
+.conc-row-info{display:flex;flex-direction:column;gap:.1rem;}
+.conc-row-monto{font-family:var(--mono);font-weight:700;color:var(--green);}
+.conc-row-fecha{font-family:var(--mono);font-size:.7rem;color:var(--muted);}
+.conc-apply-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;cursor:pointer;}
+.conc-apply-btn:hover{opacity:.85;}
+.conc-applied{background:#d1fae5;color:#065f46;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;}
+.alert-cfg-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.alert-cfg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.alert-cfg-name{font-weight:700;font-size:.95rem;}
+.alert-cfg-toggle{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);}
+.toggle-switch{position:relative;width:36px;height:20px;cursor:pointer;}
+.toggle-switch input{opacity:0;width:0;height:0;}
+.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:20px;transition:.3s;}
+.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
+input:checked+.toggle-slider{background:var(--accent);}
+input:checked+.toggle-slider:before{transform:translateX(16px);}
+.alert-day-input{width:60px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.85rem;font-family:var(--mono);text-align:center;outline:none;}
+.alert-day-input:focus{border-color:var(--accent);}
+.alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot-active{background:var(--green);}
+.dot-inactive{background:#cbd5e1;}
 </style>
 </head>
 <body>
@@ -270,7 +303,7 @@ tr:hover td{background:#f8faff;}
   <div id="view-conciliacion" class="view">
     <div class="page-header">
       <div class="page-title">Conciliación Bancaria</div>
-      <div class="page-sub">Sube el estado de cuenta BBVA y cruzamos automáticamente los abonos contra tus facturas pendientes</div>
+      <div class="page-sub">Sube hasta 5 estados de cuenta BBVA a la vez — consolidamos todos los abonos y los cruzamos contra tus facturas pendientes</div>
     </div>
     <div class="conc-drop" id="conc-drop"
       onclick="document.getElementById('conc-input').click()"
@@ -278,12 +311,13 @@ tr:hover td{background:#f8faff;}
       ondragleave="this.classList.remove('drag')"
       ondrop="handleConcDrop(event)">
       <div class="conc-icon">🏦</div>
-      <div class="conc-title">Estado de Cuenta BBVA</div>
-      <div class="conc-sub">Arrastra el PDF o haz clic para seleccionar · Solo BBVA México</div>
-      <input type="file" id="conc-input" style="display:none" accept=".pdf" onchange="handleConcFile(this)">
+      <div class="conc-title">Estados de Cuenta BBVA</div>
+      <div class="conc-sub">Arrastra hasta 5 PDFs a la vez o haz clic para seleccionar · Solo BBVA México</div>
+      <input type="file" id="conc-input" style="display:none" accept=".pdf" multiple onchange="handleConcFile(this)">
     </div>
+    <div id="conc-file-list" style="margin-bottom:1rem;"></div>
     <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">
-      ⏳ Leyendo estado de cuenta…
+      ⏳ Leyendo estados de cuenta…
     </div>
     <div id="conc-results" class="conc-results"></div>
   </div>
@@ -782,18 +816,40 @@ async function checkAndSendAlerts(){
 function handleConcDrop(ev){
   ev.preventDefault();
   document.getElementById('conc-drop').classList.remove('drag');
-  const f=ev.dataTransfer.files[0];
-  if(f) processBancoPDF(f);
+  const files=Array.from(ev.dataTransfer.files).filter(f=>f.type==='application/pdf');
+  if(files.length) processBancoPDFs(files);
 }
-function handleConcFile(input){if(input.files[0]) processBancoPDF(input.files[0]);}
+function handleConcFile(input){
+  const files=Array.from(input.files);
+  if(files.length) processBancoPDFs(files);
+}
 
-async function processBancoPDF(file){
+async function processBancoPDFs(files){
   document.getElementById('conc-loading').style.display='block';
   document.getElementById('conc-results').innerHTML='';
+  
+  // Show file list
+  const fileList=document.getElementById('conc-file-list');
+  fileList.innerHTML=files.map(f=>`<div style="display:inline-flex;align-items:center;gap:.4rem;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:.3rem .75rem;margin:.25rem;font-size:.78rem">📄 ${f.name}</div>`).join('');
+
   try{
-    const text=await extractText(file);
-    const movimientos=parseBBVA(text);
-    renderConciliacion(movimientos);
+    let allMovimientos=[];
+    for(const file of files){
+      const text=await extractText(file);
+      const movs=parseBBVA(text);
+      // Tag each movement with the source file
+      movs.forEach(m=>m.archivo=file.name);
+      allMovimientos=allMovimientos.concat(movs);
+    }
+    // Deduplicate by date+amount
+    const seen=new Set();
+    allMovimientos=allMovimientos.filter(m=>{
+      const key=`${m.fecha}-${m.monto}`;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    renderConciliacion(allMovimientos, files.length);
   }catch(e){
     document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error: '+e.message+'</div>';
   }
@@ -812,7 +868,8 @@ function parseBBVA(text){
   return movs;
 }
 
-function renderConciliacion(movimientos){
+function renderConciliacion(movimientos, numArchivos){
+  numArchivos=numArchivos||1;
   const pendientes=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
   const exactos=[],parciales=[],sinMatch=[];
   movimientos.forEach(mov=>{
@@ -825,7 +882,8 @@ function renderConciliacion(movimientos){
     if(!exactos.find(x=>x.factura.id===f.id)&&!parciales.find(x=>x.factura.id===f.id)) sinMatch.push(f);
   });
   const totalAbonos=movimientos.reduce((s,m)=>s+m.monto,0);
-  let html=`<div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
+  let html=`<div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">📂 ${numArchivos} archivo${numArchivos>1?'s':''} procesado${numArchivos>1?'s':''} · ${movimientos.length} abonos consolidados</div>
+  <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
     <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Abonos leídos</div><div class="stat-value green">${movimientos.length}</div><div class="stat-sub">${fmt(totalAbonos)}</div></div>
     <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Match exacto</div><div class="stat-value green">${exactos.length}</div></div>
     <div class="stat-card yellow" style="flex:1;min-width:140px"><div class="stat-label">Match parcial</div><div class="stat-value yellow">${parciales.length}</div></div>
@@ -834,7 +892,7 @@ function renderConciliacion(movimientos){
   if(exactos.length){
     html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias exactas</div>`;
     exactos.forEach(({mov,factura})=>{
-      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}${mov.archivo?' · '+mov.archivo:''}</span></div>
       <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
       <button class="conc-apply-btn" id="conc-btn-${factura.id}" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
     });html+='</div>';
@@ -842,7 +900,7 @@ function renderConciliacion(movimientos){
   if(parciales.length){
     html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Coincidencias parciales — revisar</div>`;
     parciales.forEach(({mov,factura})=>{
-      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente} · Factura: ${fmt(factura.total)}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}</span></div>
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente} · Factura: ${fmt(factura.total)}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}${mov.archivo?' · '+mov.archivo:''}</span></div>
       <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
       <button class="conc-apply-btn" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
     });html+='</div>';
@@ -852,7 +910,7 @@ function renderConciliacion(movimientos){
     sinMatch.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
     html+='</div>';
   }
-  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en el PDF. Verifica que sea un estado de cuenta BBVA México.</div>';
+  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en los PDFs. Verifica que sean estados de cuenta BBVA México.</div>';
   document.getElementById('conc-results').innerHTML=html;
 }
 
@@ -874,38 +932,4 @@ function aplicarConciliacion(facturaId,fechaMov,monto){
 setTimeout(()=>checkAndSendAlerts(),3000);
 </script>
 </body>
-</html>.conc-drop{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:1.5rem;}
-.conc-drop:hover,.conc-drop.drag{border-color:var(--accent);background:#f5f3ff;}
-.conc-icon{font-size:3rem;margin-bottom:.75rem;}
-.conc-title{font-weight:700;font-size:1rem;margin-bottom:.3rem;}
-.conc-sub{font-size:.75rem;color:var(--muted);}
-.conc-results{margin-top:1.5rem;}
-.conc-section{margin-bottom:1.5rem;}
-.conc-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.75rem;padding:.4rem .75rem;border-radius:6px;}
-.conc-ok .conc-section-title{background:#d1fae5;color:#065f46;}
-.conc-warn .conc-section-title{background:#fef3c7;color:#92400e;}
-.conc-err .conc-section-title{background:#fee2e2;color:#991b1b;}
-.conc-row{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#fff;border:1px solid var(--border);border-radius:8px;margin-bottom:.4rem;font-size:.8rem;}
-.conc-row-info{display:flex;flex-direction:column;gap:.1rem;}
-.conc-row-monto{font-family:var(--mono);font-weight:700;color:var(--green);}
-.conc-row-fecha{font-family:var(--mono);font-size:.7rem;color:var(--muted);}
-.conc-apply-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;cursor:pointer;}
-.conc-apply-btn:hover{opacity:.85;}
-.conc-applied{background:#d1fae5;color:#065f46;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;}
-.alert-cfg-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
-.alert-cfg-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
-.alert-cfg-name{font-weight:700;font-size:.95rem;}
-.alert-cfg-toggle{display:flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--muted);}
-.toggle-switch{position:relative;width:36px;height:20px;cursor:pointer;}
-.toggle-switch input{opacity:0;width:0;height:0;}
-.toggle-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:20px;transition:.3s;}
-.toggle-slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;}
-input:checked+.toggle-slider{background:var(--accent);}
-input:checked+.toggle-slider:before{transform:translateX(16px);}
-.alert-day-input{width:60px;background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:.3rem .5rem;font-size:.85rem;font-family:var(--mono);text-align:center;outline:none;}
-.alert-day-input:focus{border-color:var(--accent);}
-.alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
-.dot-active{background:var(--green);}
-.dot-inactive{background:#cbd5e1;}
-
-
+</html>
