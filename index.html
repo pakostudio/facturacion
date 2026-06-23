@@ -285,8 +285,8 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="upload-card" id="drop-complemento" onclick="document.getElementById('input-complemento').click()"
         ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'complemento')">
         <div class="upload-icon">📄</div><div class="upload-title">XML Complemento de Pago</div>
-        <div class="upload-sub">Hace match por UUID y marca como realizado</div>
-        <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" onchange="handleFile(this,'complemento')">
+        <div class="upload-sub">Puedes subir uno o varios XML · Match por UUID y marca como realizado</div>
+        <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" multiple onchange="handleFile(this,'complemento')">
       </div>
     </div>
     <div id="preview-factura" class="preview-card" style="display:none">
@@ -708,10 +708,21 @@ function parseOC(text){
 function handleDrop(ev,type){
   ev.preventDefault();
   document.getElementById('drop-'+type).classList.remove('drag');
-  const f=ev.dataTransfer.files[0];
-  if(f) processFile(f,type);
+  const files=[...ev.dataTransfer.files];
+  if(!files.length) return;
+  if(type==='complemento') return processComplementoBatch(files);
+  processFile(files[0],type);
 }
-function handleFile(input,type){if(input.files[0]) processFile(input.files[0],type);}
+async function handleFile(input,type){
+  const files=[...input.files];
+  if(!files.length) return;
+  if(type==='complemento'){
+    await processComplementoBatch(files);
+    input.value='';
+    return;
+  }
+  await processFile(files[0],type);
+}
 async function processFile(file,type){
   try{
     if(type==='complemento'){
@@ -781,6 +792,50 @@ function aplicarComplementoPago(comp){
   });
   if(aplicados.length){save();renderDashboard();renderFacturasTable();}
   return {aplicados,noEncontrados,duplicados};
+}
+async function processComplementoBatch(files){
+  const xmls=files.filter(f=>/\.xml$/i.test(f.name) || /xml/i.test(f.type||''));
+  if(!xmls.length){toast('Selecciona archivos XML válidos','⚠️');return;}
+  const resumen={archivos:xmls.length,aplicados:[],duplicados:[],noEncontrados:[],errores:[]};
+  for(const file of xmls){
+    try{
+      const text=await file.text();
+      const comp=parseComplementoPagoXML(text,file.name);
+      pendingComplemento=comp;
+      const res=aplicarComplementoPago(comp);
+      resumen.aplicados.push(...res.aplicados.map(x=>({...x,archivo:file.name})));
+      resumen.duplicados.push(...res.duplicados.map(f=>({factura:f,archivo:file.name})));
+      resumen.noEncontrados.push(...res.noEncontrados.map(dr=>({...dr,archivo:file.name})));
+    }catch(e){
+      console.error(e);
+      resumen.errores.push({archivo:file.name,error:e.message||'Error al leer XML'});
+    }
+  }
+  showPreviewComplementoBatch(resumen);
+}
+function showPreviewComplementoBatch(resumen){
+  const total=resumen.aplicados.reduce((s,x)=>s+(x.dr.importePagado||x.factura.total||0),0);
+  document.getElementById('preview-complemento-grid').innerHTML=[
+    ['XML procesados',resumen.archivos],['Facturas aplicadas',resumen.aplicados.length],
+    ['Duplicados',resumen.duplicados.length],['Sin match',resumen.noEncontrados.length],
+    ['Errores',resumen.errores.length],['Monto aplicado',fmt(total)]
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  let html='';
+  if(resumen.aplicados.length){
+    html+=`<div class="match-badge match-ok">✅ Aplicados · ${resumen.aplicados.map(x=>'Folio '+x.factura.folio+' '+fmt(x.dr.importePagado||x.factura.total)).join(' · ')}</div>`;
+  }
+  if(resumen.duplicados.length){
+    html+=`<div class="match-badge match-ok">ℹ️ Duplicados / ya cargados · ${resumen.duplicados.map(x=>'Folio '+x.factura.folio).join(' · ')}</div>`;
+  }
+  if(resumen.noEncontrados.length){
+    html+=`<div class="match-badge match-err">⚠️ Sin match · ${resumen.noEncontrados.map(x=>(x.archivo||'XML')+': '+(x.uuid||'').substring(0,8)+'…').join(' · ')}</div>`;
+  }
+  if(resumen.errores.length){
+    html+=`<div class="match-badge match-err">❌ Errores · ${resumen.errores.map(x=>x.archivo+': '+x.error).join(' · ')}</div>`;
+  }
+  document.getElementById('complemento-match-result').innerHTML=html||'<div class="match-badge match-err">⚠️ No se aplicó ningún complemento</div>';
+  document.getElementById('preview-complemento').style.display='block';
+  toast(resumen.aplicados.length?'Complementos aplicados':'XML procesados, revisar match',resumen.aplicados.length?'✅':'⚠️');
 }
 function showPreviewComplemento(){
   const c=pendingComplemento;
@@ -1001,7 +1056,7 @@ function parseBBVA(text,statementYear){
   const movs=[];
   const meses={ENE:'01',FEB:'02',MAR:'03',ABR:'04',MAY:'05',JUN:'06',JUL:'07',AGO:'08',SEP:'09',OCT:'10',NOV:'11',DIC:'12'};
   const lines=text.split('\n').map(x=>x.trim()).filter(Boolean);
-  const isStart=l=>/^\d{2}\/[A-Z]{3}(?:\s+\d{2}\/[A-Z]{3})?\s+\w+\s+/i.test(l);
+  const isStart=l=>/^\d{2}\/[A-Z]{3}\s+\d{2}\/[A-Z]{3}\s+\w+\s+/i.test(l);
   const blocks=[];
   let current=null;
   for(const line of lines){
@@ -1021,13 +1076,12 @@ function parseBBVA(text,statementYear){
     const dia=fechaM[1];
     const mes=meses[fechaM[2].toUpperCase()];
     if(!mes) return;
-    const blockText=block.join(' ').replace(/\s+/g,' ').trim();
-    const montos=blockText.match(/([\d,]+\.\d{2})/g);
+    const montos=first.match(/([\d,]+\.\d{2})/g);
     if(!montos||!montos.length) return;
     const monto=parseMoney(montos[0]);
     if(monto<100) return;
     const fecha=`${dia}/${mes}/${statementYear}`;
-    const desc=blockText;
+    const desc=block.join(' ').replace(/\s+/g,' ').trim();
     const ref=(desc.match(/Ref\.\s*([0-9]+)/i)||[])[1]||'';
     movs.push({fecha,desc:desc.substring(0,180),monto,ref});
   });
