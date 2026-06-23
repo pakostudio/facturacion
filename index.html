@@ -32,7 +32,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .nav-item:hover{color:var(--accent);background:rgba(91,79,207,.05);}
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,79,207,.08);font-weight:600;}
 .nav-icon{font-size:1rem;width:18px;text-align:center;}
-.main{flex:1;min-width:0;max-width:calc(100vw - 220px);padding:2rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);}
+.main{flex:1;min-width:0;width:calc(100vw - 220px);max-width:calc(100vw - 220px);padding:1.75rem 1.5rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);}
 .view{display:none;}.view.active{display:block;}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
@@ -66,12 +66,32 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
 .btn-green{background:var(--green);color:#fff;box-shadow:0 1px 4px rgba(14,159,110,.3);}
 .btn-green:hover{opacity:.85;}
-.table-wrap{width:100%;max-width:100%;overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06);}
-table{width:100%;border-collapse:collapse;font-size:.8rem;}
-.facturas-table{min-width:1320px;}
+.table-wrap{width:100%;max-width:100%;overflow-x:hidden;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+table{width:100%;border-collapse:collapse;font-size:.78rem;table-layout:fixed;}
+.facturas-table{width:100%;min-width:0;table-layout:fixed;}
+/* Vista compacta: evita que Facturas empuje la página.
+   La información completa sigue disponible en Exportar Excel y en Editar. */
+.facturas-table th:nth-child(6),.facturas-table td:nth-child(6),
+.facturas-table th:nth-child(7),.facturas-table td:nth-child(7),
+.facturas-table th:nth-child(8),.facturas-table td:nth-child(8),
+.facturas-table th:nth-child(11),.facturas-table td:nth-child(11){display:none;}
+.facturas-table th:nth-child(1),.facturas-table td:nth-child(1){width:5%;}
+.facturas-table th:nth-child(2),.facturas-table td:nth-child(2){width:10%;}
+.facturas-table th:nth-child(3),.facturas-table td:nth-child(3){width:8%;}
+.facturas-table th:nth-child(4),.facturas-table td:nth-child(4){width:14%;}
+.facturas-table th:nth-child(5),.facturas-table td:nth-child(5){width:10%;}
+.facturas-table th:nth-child(9),.facturas-table td:nth-child(9){width:10%;}
+.facturas-table th:nth-child(10),.facturas-table td:nth-child(10){width:12%;}
+.facturas-table th:nth-child(12),.facturas-table td:nth-child(12){width:10%;}
+.facturas-table th:nth-child(13),.facturas-table td:nth-child(13){width:8%;}
+.facturas-table th:nth-child(14),.facturas-table td:nth-child(14){width:8%;}
+.facturas-table th:nth-child(15),.facturas-table td:nth-child(15){width:5%;}
+.facturas-table th,.facturas-table td{padding:.55rem .55rem;overflow:hidden;text-overflow:ellipsis;}
+.facturas-table .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+.facturas-table .btn{padding:.28rem .45rem!important;font-size:.68rem!important;}
 thead{background:#f8fafc;}
-th{padding:.75rem 1rem;text-align:left;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
-td{padding:.7rem 1rem;border-bottom:1px solid #f1f5f9;background:#fff;vertical-align:middle;}
+th{padding:.65rem .75rem;text-align:left;font-size:.62rem;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:.6rem .75rem;border-bottom:1px solid #f1f5f9;background:#fff;vertical-align:middle;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:#f8faff;}
 .mono{font-family:var(--mono);}
@@ -285,8 +305,8 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="upload-card" id="drop-complemento" onclick="document.getElementById('input-complemento').click()"
         ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'complemento')">
         <div class="upload-icon">📄</div><div class="upload-title">XML Complemento de Pago</div>
-        <div class="upload-sub">Puedes subir uno o varios XML · Match por UUID y marca como realizado</div>
-        <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" multiple onchange="handleFile(this,'complemento')">
+        <div class="upload-sub">Hace match por UUID y marca como realizado</div>
+        <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" onchange="handleFile(this,'complemento')">
       </div>
     </div>
     <div id="preview-factura" class="preview-card" style="display:none">
