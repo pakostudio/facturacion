@@ -37,6 +37,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,.1);}
+.stat-card.clickable{cursor:pointer;}
+.stat-card.clickable::after{content:'Ver detalle';position:absolute;right:1rem;bottom:.75rem;font-size:.62rem;color:var(--muted);opacity:0;transition:opacity .15s;}
+.stat-card.clickable:hover::after{opacity:1;}
+.stat-card.clickable:focus{outline:3px solid rgba(91,79,207,.2);outline-offset:2px;}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
 .stat-card.purple::before{background:var(--accent);}
 .stat-card.green::before{background:var(--green);}
@@ -181,6 +185,31 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 .dot-active{background:var(--green);}
 .dot-inactive{background:#cbd5e1;}
 
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.28);z-index:250;align-items:stretch;justify-content:flex-end;}
+.drawer-overlay.open{display:flex;}
+.drawer{width:min(560px,calc(100vw - 24px));height:100%;background:#fff;border-left:1px solid var(--border);box-shadow:-20px 0 60px rgba(15,23,42,.18);padding:1.5rem;overflow-y:auto;animation:slideIn .18s ease;}
+@keyframes slideIn{from{transform:translateX(24px);opacity:.6;}to{transform:translateX(0);opacity:1;}}
+.drawer-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:1rem;}
+.drawer-title{font-size:1.2rem;font-weight:800;letter-spacing:-.03em;}
+.drawer-sub{font-size:.78rem;color:var(--muted);margin-top:.2rem;}
+.drawer-close{background:#fff;border:1px solid var(--border);width:34px;height:34px;border-radius:9px;cursor:pointer;font-size:1.1rem;color:var(--muted);}
+.drawer-close:hover{color:var(--text);border-color:var(--accent);}
+.drawer-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1rem 0;}
+.drawer-kpi{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.8rem;}
+.drawer-kpi-label{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.3rem;}
+.drawer-kpi-value{font-family:var(--mono);font-weight:700;font-size:.95rem;}
+.drawer-section{margin-top:1.25rem;}
+.drawer-section-title{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:800;margin-bottom:.6rem;}
+.drawer-list{display:flex;flex-direction:column;gap:.45rem;}
+.drawer-row{display:grid;grid-template-columns:1fr auto;gap:.8rem;align-items:center;padding:.65rem .75rem;border:1px solid var(--border);border-radius:10px;background:#fff;}
+.drawer-row:hover{background:#f8faff;}
+.drawer-row-title{font-weight:700;font-size:.78rem;white-space:normal;}
+.drawer-row-meta{font-family:var(--mono);font-size:.66rem;color:var(--muted);margin-top:.15rem;white-space:normal;}
+.drawer-row-amount{font-family:var(--mono);font-weight:800;font-size:.8rem;text-align:right;}
+.drawer-actions{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);}
+.drawer-empty{padding:1rem;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;text-align:center;}
+@media (max-width:760px){.drawer{width:100vw;padding:1rem;}.drawer-kpis{grid-template-columns:1fr;}.drawer-row{grid-template-columns:1fr;}.drawer-row-amount{text-align:left;}}
+
 @media (max-width:1100px){
   .main{max-width:calc(100vw - 220px);padding:1.5rem;}
   .upload-section{grid-template-columns:1fr;}
@@ -237,10 +266,10 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="page-sub">Resumen general de facturación — Marketing TDI</div>
     </div>
     <div class="stats-grid">
-      <div class="stat-card purple"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div></div>
-      <div class="stat-card green"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div></div>
-      <div class="stat-card yellow"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div></div>
-      <div class="stat-card red"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div></div>
+      <div class="stat-card purple clickable" role="button" tabindex="0" onclick="openDashboardDetail('total')" onkeydown="handleStatKey(event,'total')"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div></div>
+      <div class="stat-card green clickable" role="button" tabindex="0" onclick="openDashboardDetail('cobrado')" onkeydown="handleStatKey(event,'cobrado')"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div></div>
+      <div class="stat-card yellow clickable" role="button" tabindex="0" onclick="openDashboardDetail('pendiente')" onkeydown="handleStatKey(event,'pendiente')"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div></div>
+      <div class="stat-card red clickable" role="button" tabindex="0" onclick="openDashboardDetail('vencido')" onkeydown="handleStatKey(event,'vencido')"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div></div>
     </div>
     <div class="alerts-box" id="alerts-box" style="display:none">
       <div class="alerts-title">⚠️ Facturas próximas a vencer (5 días)</div>
@@ -403,6 +432,25 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     </div>
   </div>
 </div>
+
+<div class="drawer-overlay" id="dashboard-drawer" onclick="if(event.target===this) closeDashboardDetail()">
+  <aside class="drawer" aria-label="Resumen de ficha">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawer-title">Resumen</div>
+        <div class="drawer-sub" id="drawer-sub">Detalle ejecutivo</div>
+      </div>
+      <button class="drawer-close" onclick="closeDashboardDetail()">×</button>
+    </div>
+    <div class="drawer-kpis" id="drawer-kpis"></div>
+    <div id="drawer-body"></div>
+    <div class="drawer-actions">
+      <button class="btn btn-primary" id="drawer-filter-btn" onclick="applyDashboardFilter()">Ver facturas incluidas</button>
+      <button class="btn btn-outline" onclick="exportDashboardDetail()">Exportar este resumen</button>
+    </div>
+  </aside>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -496,6 +544,7 @@ function toast(msg,emoji='✅'){
   t.innerHTML=emoji+' '+msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeDashboardDetail();});
 
 function fmt(n){return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
@@ -520,6 +569,85 @@ function complementoBadge(f){
   if(f.estatusPago==='complemento')   return '<span class="badge badge-purple">📄 Elaborado</span>';
   if(f.fechaComplemento)              return '<span class="badge badge-purple">📄 Elaborado</span>';
   return '<span class="badge badge-gray">—</span>';
+}
+
+
+let activeDashboardType='total';
+function handleStatKey(e,type){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDashboardDetail(type);}}
+function daysSince(fecha){const d=new Date(fecha);if(isNaN(d)) return 0;return Math.max(0,Math.floor((Date.now()-d.getTime())/(24*3600*1000)));}
+function getDashboardItems(type){
+  if(type==='cobrado') return facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
+  if(type==='pendiente') return facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
+  if(type==='vencido') return facturas.filter(f=>isVencido(f));
+  return [...facturas];
+}
+function groupSum(items,keyFn){
+  const map={};
+  items.forEach(f=>{const k=keyFn(f)||'Sin dato';map[k]=(map[k]||0)+(Number(f.total)||0);});
+  return Object.entries(map).sort((a,b)=>b[1]-a[1]);
+}
+function dashboardMeta(type){
+  return {
+    total:{title:'Total facturado',sub:'Todas las facturas registradas en el control.',color:'purple'},
+    cobrado:{title:'Total cobrado',sub:'Facturas marcadas como pagadas o con complemento.',color:'green'},
+    pendiente:{title:'Pendiente de cobro',sub:'Facturas pendientes que todavía no superan 30 días.',color:'yellow'},
+    vencido:{title:'Vencidas +30 días',sub:'Pendientes con más de 30 días desde emisión.',color:'red'}
+  }[type]||{title:'Resumen',sub:'Detalle ejecutivo',color:'purple'};
+}
+function openDashboardDetail(type){
+  activeDashboardType=type;
+  const items=getDashboardItems(type).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
+  const meta=dashboardMeta(type);
+  const total=items.reduce((s,f)=>s+(Number(f.total)||0),0);
+  const avg=items.length?total/items.length:0;
+  const max=items.length?items.reduce((a,b)=>(Number(a.total)||0)>(Number(b.total)||0)?a:b):null;
+  const clientes=groupSum(items,f=>f.cliente).slice(0,5);
+  const meses=groupSum(items,f=>(f.fecha||'').substring(0,7)).slice(0,5);
+  const pendientesOC=items.filter(f=>!f.oc).length;
+  document.getElementById('drawer-title').textContent=meta.title;
+  document.getElementById('drawer-sub').textContent=meta.sub;
+  document.getElementById('drawer-kpis').innerHTML=`
+    <div class="drawer-kpi"><div class="drawer-kpi-label">Monto</div><div class="drawer-kpi-value">${fmt(total)}</div></div>
+    <div class="drawer-kpi"><div class="drawer-kpi-label">Facturas</div><div class="drawer-kpi-value">${items.length}</div></div>
+    <div class="drawer-kpi"><div class="drawer-kpi-label">Promedio</div><div class="drawer-kpi-value">${fmt(avg)}</div></div>
+  `;
+  const topFacturas=items.slice(0,10).map(f=>{
+    const extra= type==='vencido'?` · ${daysSince(f.fecha)-30} días vencida`: type==='pendiente'?` · ${daysSince(f.fecha)} días transcurridos`: f.fechaPago?` · pago ${f.fechaPago}`:'';
+    return `<div class="drawer-row"><div><div class="drawer-row-title">Folio ${f.folio} · ${f.cliente}</div><div class="drawer-row-meta">${f.fecha}${extra} · OC: ${f.oc||'—'} · ${f.rfcReceptor}</div></div><div class="drawer-row-amount">${fmt(f.total)}</div></div>`;
+  }).join('') || '<div class="drawer-empty">No hay facturas en esta ficha.</div>';
+  const clientRows=clientes.map(([c,v])=>`<div class="drawer-row"><div class="drawer-row-title">${c}</div><div class="drawer-row-amount">${fmt(v)}</div></div>`).join('') || '<div class="drawer-empty">Sin clientes para mostrar.</div>';
+  const monthRows=meses.map(([m,v])=>`<div class="drawer-row"><div class="drawer-row-title">${m}</div><div class="drawer-row-amount">${fmt(v)}</div></div>`).join('') || '<div class="drawer-empty">Sin meses para mostrar.</div>';
+  const nota = type==='pendiente' ? `<div class="drawer-section"><div class="drawer-section-title">Riesgo operativo</div><div class="drawer-row"><div class="drawer-row-title">Facturas sin OC en este grupo</div><div class="drawer-row-amount">${pendientesOC}</div></div></div>` : '';
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="drawer-section"><div class="drawer-section-title">Top clientes</div><div class="drawer-list">${clientRows}</div></div>
+    <div class="drawer-section"><div class="drawer-section-title">Por mes</div><div class="drawer-list">${monthRows}</div></div>
+    ${nota}
+    <div class="drawer-section"><div class="drawer-section-title">Facturas incluidas</div><div class="drawer-list">${topFacturas}</div></div>
+  `;
+  document.getElementById('dashboard-drawer').classList.add('open');
+}
+function closeDashboardDetail(){document.getElementById('dashboard-drawer').classList.remove('open');}
+function applyDashboardFilter(){
+  closeDashboardDetail();
+  const nav=[...document.querySelectorAll('.nav-item')].find(n=>n.textContent.includes('Facturas'));
+  showView('facturas',nav);
+  document.getElementById('search-input').value='';
+  document.getElementById('filter-cliente').value='';
+  document.getElementById('filter-mes').value='';
+  document.getElementById('filter-status').value= activeDashboardType==='vencido'?'vencido': activeDashboardType==='pendiente'?'pendiente': activeDashboardType==='cobrado'?'pagado':'';
+  renderFacturasTable();
+  toast('Vista filtrada aplicada');
+}
+function exportDashboardDetail(){
+  const meta=dashboardMeta(activeDashboardType);
+  const items=getDashboardItems(activeDashboardType);
+  const rows=[['Resumen',meta.title],['Monto total',items.reduce((s,f)=>s+(Number(f.total)||0),0)],['Facturas',items.length],[],['Folio','UUID','Fecha','RFC','Cliente','Descripción','Total','OC','Estatus Pago','Fecha Pago','Fecha Complemento']];
+  items.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.total,f.oc||'',isVencido(f)?'vencida':f.estatusPago,f.fechaPago||'',f.fechaComplemento||'']));
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,meta.title.substring(0,30));
+  XLSX.writeFile(wb,`Resumen_${meta.title.replace(/\s+/g,'_')}.xlsx`);
+  toast('Resumen exportado');
 }
 
 function renderDashboard(){
