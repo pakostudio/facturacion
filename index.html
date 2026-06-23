@@ -24,7 +24,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .topbar-title{font-weight:700;font-size:1rem;letter-spacing:-.02em;color:var(--text);}
 .topbar-sub{font-size:.7rem;color:var(--muted);font-family:var(--mono);}
 .topbar-date{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
-.layout{display:flex;min-height:calc(100vh - 60px);}
+.layout{display:flex;min-height:calc(100vh - 60px);width:100%;overflow:hidden;}
 .sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;box-shadow:1px 0 4px rgba(0,0,0,.04);}
 .nav-section{margin-bottom:1.5rem;}
 .nav-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding:0 1.25rem;margin-bottom:.5rem;}
@@ -32,7 +32,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .nav-item:hover{color:var(--accent);background:rgba(91,79,207,.05);}
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,79,207,.08);font-weight:600;}
 .nav-icon{font-size:1rem;width:18px;text-align:center;}
-.main{flex:1;padding:2rem;overflow-y:auto;background:var(--bg);}
+.main{flex:1;min-width:0;max-width:calc(100vw - 220px);padding:2rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);}
 .view{display:none;}.view.active{display:block;}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
@@ -66,8 +66,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .btn-outline:hover{border-color:var(--accent);color:var(--accent);}
 .btn-green{background:var(--green);color:#fff;box-shadow:0 1px 4px rgba(14,159,110,.3);}
 .btn-green:hover{opacity:.85;}
-.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06);}
+.table-wrap{width:100%;max-width:100%;overflow-x:auto;border-radius:10px;border:1px solid var(--border);box-shadow:0 1px 4px rgba(0,0,0,.06);}
 table{width:100%;border-collapse:collapse;font-size:.8rem;}
+.facturas-table{min-width:1320px;}
 thead{background:#f8fafc;}
 th{padding:.75rem 1rem;text-align:left;font-size:.65rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
 td{padding:.7rem 1rem;border-bottom:1px solid #f1f5f9;background:#fff;vertical-align:middle;}
@@ -80,7 +81,7 @@ tr:hover td{background:#f8faff;}
 .badge-red{background:#fee2e2;color:#991b1b;}
 .badge-purple{background:#ede9fe;color:#4c1d95;}
 .badge-gray{background:#f3f4f6;color:#4b5563;}
-.upload-section{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem;}
+.upload-section{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:1.5rem;margin-bottom:2rem;}
 .upload-card{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .upload-card:hover,.upload-card.drag{border-color:var(--accent);background:#f5f3ff;}
 .upload-icon{font-size:2.5rem;margin-bottom:.75rem;}
@@ -166,6 +167,26 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 .alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .dot-active{background:var(--green);}
 .dot-inactive{background:#cbd5e1;}
+
+@media (max-width:1100px){
+  .main{max-width:calc(100vw - 220px);padding:1.5rem;}
+  .upload-section{grid-template-columns:1fr;}
+  .toolbar{align-items:stretch;}
+  .filter-input,.filter-select,.btn{width:100%;justify-content:center;}
+}
+@media (max-width:760px){
+  .topbar{padding:0 1rem;}
+  .topbar-date{display:none;}
+  .layout{display:block;overflow:visible;}
+  .sidebar{position:relative;top:auto;width:100%;height:auto;display:flex;overflow-x:auto;padding:.5rem 0;}
+  .nav-section{display:flex;margin-bottom:0;}
+  .nav-label{display:none;}
+  .nav-item{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;}
+  .nav-item.active{border-left:none;border-bottom-color:var(--accent);}
+  .main{max-width:100vw;padding:1rem;}
+  .preview-grid{grid-template-columns:1fr;}
+  .conc-row{align-items:flex-start;gap:.75rem;flex-direction:column;}
+}
 </style>
 </head>
 <body>
@@ -236,7 +257,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <button class="btn btn-green" onclick="exportExcel()">⬇️ Exportar Excel</button>
     </div>
     <div class="table-wrap">
-      <table><thead><tr>
+      <table class="facturas-table"><thead><tr>
         <th>Folio</th><th>UUID</th><th>Fecha</th><th>Cliente</th><th>RFC</th>
         <th>Descripción</th><th>Subtotal</th><th>IVA</th><th>Total</th>
         <th>OC</th><th>Estatus SAT</th><th>Estatus Pago</th><th>F.Pago</th><th>Complemento</th><th>Acciones</th>
@@ -247,7 +268,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 
   <!-- NUEVA -->
   <div id="view-nueva" class="view">
-    <div class="page-header"><div class="page-title">Nueva Factura</div><div class="page-sub">Carga el PDF de la factura y opcionalmente la OC (solo La Madrileña)</div></div>
+    <div class="page-header"><div class="page-title">Nueva Factura</div><div class="page-sub">Carga factura PDF, OC opcional o complemento de pago XML para marcar automáticamente la factura</div></div>
     <div class="upload-section">
       <div class="upload-card" id="drop-factura" onclick="document.getElementById('input-factura').click()"
         ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'factura')">
@@ -261,6 +282,12 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
         <div class="upload-sub">Solo para La Madrileña · Opcional</div>
         <input type="file" id="input-oc" class="upload-input" accept=".pdf" onchange="handleFile(this,'oc')">
       </div>
+      <div class="upload-card" id="drop-complemento" onclick="document.getElementById('input-complemento').click()"
+        ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'complemento')">
+        <div class="upload-icon">📄</div><div class="upload-title">XML Complemento de Pago</div>
+        <div class="upload-sub">Hace match por UUID y marca como realizado</div>
+        <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" onchange="handleFile(this,'complemento')">
+      </div>
     </div>
     <div id="preview-factura" class="preview-card" style="display:none">
       <div class="preview-title">📄 Datos extraídos — Factura</div>
@@ -270,6 +297,11 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="preview-title">📋 Datos extraídos — OC</div>
       <div class="preview-grid" id="preview-oc-grid"></div>
       <div id="match-result"></div>
+    </div>
+    <div id="preview-complemento" class="preview-card" style="display:none">
+      <div class="preview-title">📄 Complemento de pago XML</div>
+      <div class="preview-grid" id="preview-complemento-grid"></div>
+      <div id="complemento-match-result"></div>
     </div>
     <div id="save-section" style="display:none;margin-top:1rem;">
       <button class="btn btn-primary" onclick="saveFactura()" style="padding:.6rem 1.5rem;font-size:.9rem;">💾 Guardar Factura</button>
@@ -424,11 +456,12 @@ if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
     montoPago:   existing[f.folio]?.montoPago||f.montoPago,
     fechaComplemento: existing[f.folio]?.fechaComplemento||f.fechaComplemento,
     fechaPagoComp:    existing[f.folio]?.fechaPagoComp||'',
+    complementoUuid: existing[f.folio]?.complementoUuid||'',
   }));
   localStorage.setItem('tdi_facturas',JSON.stringify(facturas));
 }
 
-let pendingFactura=null,pendingOC=null,editingId=null,selectedStatus=null;
+let pendingFactura=null,pendingOC=null,pendingComplemento=null,editingId=null,selectedStatus=null;
 function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
 
 document.getElementById('topbar-date').textContent=
@@ -672,14 +705,105 @@ function parseOC(text){
   const iva=ivaM?toMXN(ivaM[1]):0;
   return {oc,subtotal,iva,total};
 }
-function handleDrop(ev,type){ev.preventDefault();document.getElementById('drop-'+type).classList.remove('drag');const f=ev.dataTransfer.files[0];if(f) processFile(f,type);}
+function handleDrop(ev,type){
+  ev.preventDefault();
+  document.getElementById('drop-'+type).classList.remove('drag');
+  const f=ev.dataTransfer.files[0];
+  if(f) processFile(f,type);
+}
 function handleFile(input,type){if(input.files[0]) processFile(input.files[0],type);}
 async function processFile(file,type){
   try{
+    if(type==='complemento'){
+      const text=await file.text();
+      pendingComplemento=parseComplementoPagoXML(text,file.name);
+      showPreviewComplemento();
+      return;
+    }
     const text=await extractText(file);
-    if(type==='factura'){pendingFactura=parseFactura(text);showPreviewFactura();}
-    else{pendingOC=parseOC(text);showPreviewOC();}
-  }catch(e){toast('Error al leer el PDF','❌');}
+    if(type==='factura'){
+      pendingFactura=parseFactura(text);
+      showPreviewFactura();
+    }else{
+      pendingOC=parseOC(text);
+      showPreviewOC();
+    }
+  }catch(e){
+    console.error(e);
+    toast(type==='complemento'?'Error al leer el XML':'Error al leer el PDF','❌');
+  }
+}
+function normTxt(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/@/g,'Ñ').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+}
+function parseMoney(s){return parseFloat(String(s||'0').replace(/,/g,''))||0;}
+function toISOFromCfdiDate(s){return (s||'').substring(0,10);}
+function parseComplementoPagoXML(xmlText,fileName){
+  const doc=new DOMParser().parseFromString(xmlText,'application/xml');
+  const parseErr=doc.querySelector('parsererror');
+  if(parseErr) throw new Error('XML inválido');
+  const getAttr=(el,names)=>{for(const n of names){const v=el?.getAttribute(n);if(v) return v;}return '';};
+  const comprobante=doc.documentElement;
+  const timbre=[...doc.getElementsByTagName('*')].find(el=>el.localName==='TimbreFiscalDigital');
+  const pago=[...doc.getElementsByTagName('*')].find(el=>el.localName==='Pago');
+  const doctos=[...doc.getElementsByTagName('*')].filter(el=>el.localName==='DoctoRelacionado');
+  const fechaComplemento=toISOFromCfdiDate(getAttr(comprobante,['Fecha','fecha']));
+  const fechaPago=toISOFromCfdiDate(getAttr(pago,['FechaPago','fechaPago']));
+  const uuidComplemento=getAttr(timbre,['UUID','Uuid','uuid']);
+  const relacionados=doctos.map(d=>({
+    uuid:getAttr(d,['IdDocumento','idDocumento']).toUpperCase(),
+    folio:getAttr(d,['Folio','folio']),
+    moneda:getAttr(d,['MonedaDR','monedaDR']),
+    metodo:getAttr(d,['MetodoDePagoDR','metodoDePagoDR']),
+    parcialidad:getAttr(d,['NumParcialidad','numParcialidad']),
+    importePagado:parseFloat(getAttr(d,['ImpPagado','impPagado'])||'0'),
+    saldoAnterior:parseFloat(getAttr(d,['ImpSaldoAnt','impSaldoAnt'])||'0'),
+    saldoInsoluto:parseFloat(getAttr(d,['ImpSaldoInsoluto','impSaldoInsoluto'])||'0')
+  }));
+  if(!relacionados.length) throw new Error('No encontré DoctoRelacionado en el complemento');
+  return {archivo:fileName,uuidComplemento,fechaComplemento,fechaPago,relacionados};
+}
+function aplicarComplementoPago(comp){
+  const aplicados=[];
+  const noEncontrados=[];
+  const duplicados=[];
+  comp.relacionados.forEach(dr=>{
+    const f=facturas.find(x=>String(x.uuid||'').toUpperCase()===dr.uuid || (dr.folio&&String(x.folio)===String(dr.folio)));
+    if(!f){noEncontrados.push(dr);return;}
+    if(f.complementoUuid && f.complementoUuid===comp.uuidComplemento){duplicados.push(f);return;}
+    f.estatusPago='complemento';
+    f.fechaPago=comp.fechaPago||f.fechaPago||'';
+    f.fechaPagoComp=comp.fechaPago||f.fechaPagoComp||'';
+    f.fechaComplemento=comp.fechaComplemento||f.fechaComplemento||'';
+    f.montoPago=dr.importePagado||f.montoPago||f.total;
+    f.complementoUuid=comp.uuidComplemento||f.complementoUuid||'';
+    aplicados.push({factura:f,dr});
+  });
+  if(aplicados.length){save();renderDashboard();renderFacturasTable();}
+  return {aplicados,noEncontrados,duplicados};
+}
+function showPreviewComplemento(){
+  const c=pendingComplemento;
+  const total=c.relacionados.reduce((s,r)=>s+(r.importePagado||0),0);
+  document.getElementById('preview-complemento-grid').innerHTML=[
+    ['Archivo',c.archivo||'—'],['UUID complemento',(c.uuidComplemento||'—').substring(0,20)+'…'],
+    ['Fecha pago',c.fechaPago||'—'],['Fecha complemento',c.fechaComplemento||'—'],
+    ['Documentos relacionados',c.relacionados.length],['Monto pagado',fmt(total)]
+  ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
+  const res=aplicarComplementoPago(c);
+  let html='';
+  if(res.aplicados.length){
+    html+=`<div class="match-badge match-ok">✅ Complemento aplicado · ${res.aplicados.map(x=>'Folio '+x.factura.folio+' '+fmt(x.dr.importePagado||x.factura.total)).join(' · ')}</div>`;
+  }
+  if(res.duplicados.length){
+    html+=`<div class="match-badge match-ok">ℹ️ Complemento ya estaba cargado · ${res.duplicados.map(f=>'Folio '+f.folio).join(' · ')}</div>`;
+  }
+  if(res.noEncontrados.length){
+    html+=`<div class="match-badge match-err">⚠️ Sin match para UUID: ${res.noEncontrados.map(x=>(x.uuid||'').substring(0,8)+'…').join(', ')}</div>`;
+  }
+  document.getElementById('complemento-match-result').innerHTML=html;
+  document.getElementById('preview-complemento').style.display='block';
+  toast(res.aplicados.length?'Complemento aplicado':'Complemento leído, revisar match',res.aplicados.length?'✅':'⚠️');
 }
 function showPreviewFactura(){
   const f=pendingFactura;
@@ -715,17 +839,19 @@ function saveFactura(){
   resetNueva();renderDashboard();
 }
 function resetNueva(){
-  pendingFactura=null;pendingOC=null;
+  pendingFactura=null;pendingOC=null;pendingComplemento=null;
   document.getElementById('preview-factura').style.display='none';
   document.getElementById('preview-oc').style.display='none';
+  document.getElementById('preview-complemento').style.display='none';
   document.getElementById('save-section').style.display='none';
   document.getElementById('input-factura').value='';
   document.getElementById('input-oc').value='';
+  document.getElementById('input-complemento').value='';
 }
 
 function exportExcel(){
-  const rows=[['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento']];
-  facturas.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'']));
+  const rows=[['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento','UUID Complemento']];
+  facturas.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'',f.complementoUuid||'']));
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Facturas');
@@ -829,158 +955,188 @@ async function checkAndSendAlerts(){
 function handleConcDrop(ev){
   ev.preventDefault();
   document.getElementById('conc-drop').classList.remove('drag');
-  const files=Array.from(ev.dataTransfer.files).filter(f=>f.type==='application/pdf');
-  if(files.length) processBancoPDFs(files);
+  const files=Array.from(ev.dataTransfer.files).filter(f=>/pdf$/i.test(f.name)||f.type==='application/pdf'||!f.type);
+  if(files.length) processBancoPDFs(files.slice(0,5));
 }
 function handleConcFile(input){
-  const files=Array.from(input.files);
-  if(files.length) processBancoPDFs(files);
+  const files=Array.from(input.files).filter(f=>/pdf$/i.test(f.name)||f.type==='application/pdf'||!f.type);
+  if(files.length) processBancoPDFs(files.slice(0,5));
 }
-
+function extractStatementYear(text,fileName){
+  const byPeriod=text.match(/DEL\s+\d{2}\/\d{2}\/(\d{4})\s+AL/i);
+  if(byPeriod) return parseInt(byPeriod[1],10);
+  const byName=String(fileName||'').match(/_(20\d{2})(\d{2})/);
+  if(byName) return parseInt(byName[1],10);
+  return new Date().getFullYear();
+}
 async function processBancoPDFs(files){
   document.getElementById('conc-loading').style.display='block';
   document.getElementById('conc-results').innerHTML='';
-  
-  // Show file list
   const fileList=document.getElementById('conc-file-list');
   fileList.innerHTML=files.map(f=>`<div style="display:inline-flex;align-items:center;gap:.4rem;background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:.3rem .75rem;margin:.25rem;font-size:.78rem">📄 ${f.name}</div>`).join('');
-
   try{
     let allMovimientos=[];
     for(const file of files){
       const text=await extractText(file);
-      const movs=parseBBVA(text);
-      // Tag each movement with the source file
+      const year=extractStatementYear(text,file.name);
+      const movs=parseBBVA(text,year);
       movs.forEach(m=>m.archivo=file.name);
       allMovimientos=allMovimientos.concat(movs);
     }
-    // Deduplicate by date+amount
     const seen=new Set();
     allMovimientos=allMovimientos.filter(m=>{
-      const key=`${m.fecha}-${m.monto}`;
+      const key=`${m.fecha}-${m.monto}-${normTxt(m.desc)}`;
       if(seen.has(key)) return false;
       seen.add(key);
       return true;
     });
     renderConciliacion(allMovimientos, files.length);
   }catch(e){
+    console.error(e);
     document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error: '+e.message+'</div>';
   }
   document.getElementById('conc-loading').style.display='none';
 }
-
-function parseBBVA(text){
+function parseBBVA(text,statementYear){
   const movs=[];
-  const meses={'ENE':'01','FEB':'02','MAR':'03','ABR':'04','MAY':'05','JUN':'06',
-               'JUL':'07','AGO':'08','SEP':'09','OCT':'10','NOV':'11','DIC':'12'};
-
-  const lines=text.split('\n');
+  const meses={ENE:'01',FEB:'02',MAR:'03',ABR:'04',MAY:'05',JUN:'06',JUL:'07',AGO:'08',SEP:'09',OCT:'10',NOV:'11',DIC:'12'};
+  const lines=text.split('\n').map(x=>x.trim()).filter(Boolean);
+  const isStart=l=>/^\d{2}\/[A-Z]{3}(?:\s+\d{2}\/[A-Z]{3})?\s+\w+\s+/i.test(l);
+  const blocks=[];
+  let current=null;
   for(const line of lines){
-    const l=line.trim();
-
-    // Formato exacto BBVA: "03/FEB 03/FEB T20 SPEI RECIBIDOCITI MEXICO 78,137.14 78,560.20 78,560.20"
-    // Solo nos interesan abonos (RECIBIDO), ignoramos ENVIADO y servicios
-    if(!l.includes('RECIBIDO')) continue;
-
-    // Extraer fecha: DD/MES al inicio
-    const fechaM=l.match(/^(\d{2})\/([A-Z]{3})/);
-    if(!fechaM) continue;
-
-    const dia=fechaM[1];
-    const mesStr=fechaM[2];
-    const mes=meses[mesStr];
-    if(!mes) continue;
-
-    // Extraer el primer monto que aparece (el abono, no los saldos)
-    // Patrón: varios números con formato 999,999.99 — el primero es el monto del movimiento
-    const montos=l.match(/([\d,]+\.\d{2})/g);
-    if(!montos||montos.length===0) continue;
-
-    const monto=parseFloat(montos[0].replace(/,/g,''));
-    if(monto<100) continue;
-
-    // Determinar año
-    const hoy=new Date();
-    const mesNum=parseInt(mes);
-    const mesActual=hoy.getMonth()+1;
-    const añoActual=hoy.getFullYear();
-    const año=(mesNum>mesActual+1)?añoActual-1:añoActual;
-    const fecha=`${dia}/${mes}/${año}`;
-
-    // Descripción: todo entre el código de operación y el primer monto
-    const desc=l.replace(/^\d{2}\/[A-Z]{3}\s+\d{2}\/[A-Z]{3}\s+\w+\s+/,'')
-                .replace(/\s+[\d,]+\.\d{2}.*$/,'').trim().substring(0,60);
-
-    movs.push({fecha,desc,monto});
+    if(isStart(line)){
+      if(current) blocks.push(current);
+      current=[line];
+    }else if(current){
+      current.push(line);
+    }
   }
-
-  // Deduplicar por fecha+monto
-  const seen=new Set();
-  return movs.filter(m=>{
-    const key=`${m.fecha}-${m.monto}`;
-    if(seen.has(key)) return false;
-    seen.add(key);
-    return true;
+  if(current) blocks.push(current);
+  blocks.forEach(block=>{
+    const first=block[0];
+    if(!/RECIBIDO/i.test(first)) return;
+    const fechaM=first.match(/^(\d{2})\/([A-Z]{3})/i);
+    if(!fechaM) return;
+    const dia=fechaM[1];
+    const mes=meses[fechaM[2].toUpperCase()];
+    if(!mes) return;
+    const blockText=block.join(' ').replace(/\s+/g,' ').trim();
+    const montos=blockText.match(/([\d,]+\.\d{2})/g);
+    if(!montos||!montos.length) return;
+    const monto=parseMoney(montos[0]);
+    if(monto<100) return;
+    const fecha=`${dia}/${mes}/${statementYear}`;
+    const desc=blockText;
+    const ref=(desc.match(/Ref\.\s*([0-9]+)/i)||[])[1]||'';
+    movs.push({fecha,desc:desc.substring(0,180),monto,ref});
   });
+  return movs;
 }
-
+function dateFromMov(fechaMov){
+  const p=fechaMov.split('/');
+  if(p.length===3) return new Date(`${p[2]}-${p[1]}-${p[0]}T00:00:00`);
+  return null;
+}
+function matchScoreFactura(f,mov,usedFacturas){
+  if(usedFacturas.has(f.id)) return -9999;
+  if(f.estatusPago==='pagado'||f.estatusPago==='complemento') return -9999;
+  const diff=Math.abs((f.total||0)-mov.monto);
+  if(diff>=1) return -9999;
+  let score=1000-diff;
+  const movTxt=normTxt(mov.desc);
+  const cli=normTxt(f.cliente);
+  const rfc=normTxt(f.rfcReceptor);
+  if(cli && movTxt.includes(cli.substring(0,Math.min(cli.length,14)))) score+=600;
+  if(rfc && movTxt.includes(rfc)) score+=400;
+  const movDate=dateFromMov(mov.fecha);
+  const facDate=new Date(f.fecha+'T00:00:00');
+  if(movDate && !isNaN(facDate)){
+    const days=(movDate-facDate)/(1000*60*60*24);
+    if(days>=0) score+=Math.max(0,180-Math.min(days,180));
+    else score-=500;
+  }
+  return score;
+}
+function findFacturaMatch(mov,usedFacturas){
+  let best=null,bestScore=-9999;
+  facturas.forEach(f=>{
+    const sc=matchScoreFactura(f,mov,usedFacturas);
+    if(sc>bestScore){best=f;bestScore=sc;}
+  });
+  return bestScore>0?{factura:best,score:bestScore}:null;
+}
+function autoAplicarConciliacion(exactos){
+  let count=0;
+  exactos.forEach(({mov,factura})=>{
+    if(factura.estatusPago==='pagado'||factura.estatusPago==='complemento') return;
+    aplicarConciliacion(factura.id,mov.fecha,mov.monto,true,mov);
+    count++;
+  });
+  return count;
+}
 function renderConciliacion(movimientos, numArchivos){
   numArchivos=numArchivos||1;
-  const pendientes=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
-  const exactos=[],parciales=[],sinMatch=[];
+  const exactos=[],sinMatchMov=[];
+  const usedFacturas=new Set();
   movimientos.forEach(mov=>{
-    const match=pendientes.find(f=>Math.abs(f.total-mov.monto)<1);
-    const parcial=!match&&pendientes.find(f=>Math.abs(f.total-mov.monto)/f.total<0.05);
-    if(match) exactos.push({mov,factura:match});
-    else if(parcial) parciales.push({mov,factura:parcial});
+    const match=findFacturaMatch(mov,usedFacturas);
+    if(match){
+      exactos.push({mov,factura:match.factura});
+      usedFacturas.add(match.factura.id);
+    }else{
+      sinMatchMov.push(mov);
+    }
   });
-  pendientes.forEach(f=>{
-    if(!exactos.find(x=>x.factura.id===f.id)&&!parciales.find(x=>x.factura.id===f.id)) sinMatch.push(f);
-  });
+  const auto=autoAplicarConciliacion(exactos);
+  const pendientes=facturas.filter(f=>f.estatusPago==='pendiente');
   const totalAbonos=movimientos.reduce((s,m)=>s+m.monto,0);
-  let html=`<div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">📂 ${numArchivos} archivo${numArchivos>1?'s':''} procesado${numArchivos>1?'s':''} · ${movimientos.length} abonos consolidados</div>
+  let html=`<div style="font-size:.78rem;color:var(--muted);margin-bottom:1rem">📂 ${numArchivos} archivo${numArchivos>1?'s':''} procesado${numArchivos>1?'s':''} · ${movimientos.length} abonos leídos · ${auto} factura${auto===1?'':'s'} marcada${auto===1?'':'s'} como pagada</div>
   <div style="display:flex;gap:1rem;margin-bottom:1.5rem;flex-wrap:wrap">
     <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Abonos leídos</div><div class="stat-value green">${movimientos.length}</div><div class="stat-sub">${fmt(totalAbonos)}</div></div>
-    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Match exacto</div><div class="stat-value green">${exactos.length}</div></div>
-    <div class="stat-card yellow" style="flex:1;min-width:140px"><div class="stat-label">Match parcial</div><div class="stat-value yellow">${parciales.length}</div></div>
-    <div class="stat-card red" style="flex:1;min-width:140px"><div class="stat-label">Sin abono</div><div class="stat-value red">${sinMatch.length}</div></div>
+    <div class="stat-card green" style="flex:1;min-width:140px"><div class="stat-label">Match aplicado</div><div class="stat-value green">${exactos.length}</div></div>
+    <div class="stat-card yellow" style="flex:1;min-width:140px"><div class="stat-label">Abonos sin match</div><div class="stat-value yellow">${sinMatchMov.length}</div></div>
+    <div class="stat-card red" style="flex:1;min-width:140px"><div class="stat-label">Pendientes restantes</div><div class="stat-value red">${pendientes.length}</div></div>
   </div>`;
   if(exactos.length){
-    html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias exactas</div>`;
+    html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias aplicadas automáticamente</div>`;
     exactos.forEach(({mov,factura})=>{
       html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}${mov.archivo?' · '+mov.archivo:''}</span></div>
-      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
-      <button class="conc-apply-btn" id="conc-btn-${factura.id}" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
-    });html+='</div>';
-  }
-  if(parciales.length){
-    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Coincidencias parciales — revisar</div>`;
-    parciales.forEach(({mov,factura})=>{
-      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente} · Factura: ${fmt(factura.total)}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}${mov.archivo?' · '+mov.archivo:''}</span></div>
-      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span>
-      <button class="conc-apply-btn" onclick="aplicarConciliacion(${factura.id},'${mov.fecha}',${mov.monto})">Aplicar ✓</button></div></div>`;
-    });html+='</div>';
-  }
-  if(sinMatch.length){
-    html+=`<div class="conc-section conc-err"><div class="conc-section-title">❌ Facturas pendientes sin abono</div>`;
-    sinMatch.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span><span class="conc-applied">✅ Pagada</span></div></div>`;
+    });
     html+='</div>';
   }
-  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en los PDFs. Verifica que sean estados de cuenta BBVA México.</div>';
+  if(sinMatchMov.length){
+    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Abonos leídos sin factura exacta pendiente</div>`;
+    sinMatchMov.forEach(m=>{
+      html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>${fmt(m.monto)}</strong></span><span class="conc-row-fecha">${m.fecha} · ${m.desc}${m.archivo?' · '+m.archivo:''}</span></div></div>`;
+    });
+    html+='</div>';
+  }
+  if(pendientes.length){
+    html+=`<div class="conc-section conc-err"><div class="conc-section-title">❌ Facturas que siguen pendientes</div>`;
+    pendientes.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
+    html+='</div>';
+  }
+  if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en los PDFs. Verifica que sean estados de cuenta BBVA México con movimientos tipo SPEI RECIBIDO.</div>';
   document.getElementById('conc-results').innerHTML=html;
+  if(auto) toast(auto+' factura(s) marcadas como pagadas');
 }
-
-function aplicarConciliacion(facturaId,fechaMov,monto){
+function aplicarConciliacion(facturaId,fechaMov,monto,silent=false,mov=null){
   const f=facturas.find(x=>x.id===facturaId);if(!f) return;
   let fechaPago='';
   const p=fechaMov.split('/');
   if(p.length===3) fechaPago=`${p[2]}-${p[1]}-${p[0]}`;
   else if(p.length===2){const hoy=new Date();fechaPago=`${hoy.getFullYear()}-${p[1]}-${p[0]}`;}
-  f.estatusPago='pagado';f.fechaPago=fechaPago;f.montoPago=monto;
+  f.estatusPago='pagado';
+  f.fechaPago=fechaPago;
+  f.montoPago=monto;
+  f.bancoArchivo=mov?.archivo||f.bancoArchivo||'';
+  f.bancoReferencia=mov?.ref||f.bancoReferencia||'';
   save();
   const btn=document.getElementById('conc-btn-'+facturaId);
   if(btn) btn.outerHTML='<span class="conc-applied">✅ Aplicado</span>';
-  toast('Folio '+f.folio+' marcado como pagado');
+  if(!silent) toast('Folio '+f.folio+' marcado como pagado');
   renderDashboard();
 }
 
