@@ -53,6 +53,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
 .stat-value.yellow{color:var(--yellow);}
 .stat-value.red{color:var(--red);}
 .stat-sub{font-size:.7rem;color:var(--muted);margin-top:.25rem;}
+.stat-action{margin-top:.75rem;font-size:.68rem;font-weight:700;color:var(--accent);display:inline-flex;align-items:center;gap:.25rem;}
+.stat-card{user-select:none;}
+.stat-card.clickable{position:relative;z-index:1;}
+.stat-card.clickable *{pointer-events:none;}
 .alerts-box{background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;}
 .alerts-title{font-size:.75rem;font-weight:600;color:#92400e;margin-bottom:.5rem;}
 .alert-item{font-size:.8rem;color:var(--text);padding:.2rem 0;}
@@ -266,10 +270,10 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="page-sub">Resumen general de facturación — Marketing TDI</div>
     </div>
     <div class="stats-grid">
-      <div class="stat-card purple clickable" role="button" tabindex="0" onclick="openDashboardDetail('total')" onkeydown="handleStatKey(event,'total')"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div></div>
-      <div class="stat-card green clickable" role="button" tabindex="0" onclick="openDashboardDetail('cobrado')" onkeydown="handleStatKey(event,'cobrado')"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div></div>
-      <div class="stat-card yellow clickable" role="button" tabindex="0" onclick="openDashboardDetail('pendiente')" onkeydown="handleStatKey(event,'pendiente')"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div></div>
-      <div class="stat-card red clickable" role="button" tabindex="0" onclick="openDashboardDetail('vencido')" onkeydown="handleStatKey(event,'vencido')"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div></div>
+      <div class="stat-card purple clickable" data-dashboard-type="total" role="button" tabindex="0" onclick="openDashboardDetail('total')" onkeydown="handleStatKey(event,'total')"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
+      <div class="stat-card green clickable" data-dashboard-type="cobrado" role="button" tabindex="0" onclick="openDashboardDetail('cobrado')" onkeydown="handleStatKey(event,'cobrado')"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
+      <div class="stat-card yellow clickable" data-dashboard-type="pendiente" role="button" tabindex="0" onclick="openDashboardDetail('pendiente')" onkeydown="handleStatKey(event,'pendiente')"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
+      <div class="stat-card red clickable" data-dashboard-type="vencido" role="button" tabindex="0" onclick="openDashboardDetail('vencido')" onkeydown="handleStatKey(event,'vencido')"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
     </div>
     <div class="alerts-box" id="alerts-box" style="display:none">
       <div class="alerts-title">⚠️ Facturas próximas a vencer (5 días)</div>
