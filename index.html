@@ -120,7 +120,7 @@ tr:hover td{background:#f8faff;}
 .match-err{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(4px);z-index:200;align-items:center;justify-content:center;}
 .modal-overlay.open{display:flex;}
-.modal{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;animation:slideUp .2s ease;box-shadow:0 20px 60px rgba(0,0,0,.15);}
+.modal{background:#fff;border:1px solid var(--border);border-radius:16px;padding:1.75rem;width:100%;max-width:460px;max-height:calc(100vh - 2rem);overflow-y:auto;animation:slideUp .2s ease;box-shadow:0 20px 60px rgba(0,0,0,.15);}
 @keyframes slideUp{from{transform:translateY(20px);opacity:0;}}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;}
 .modal-title{font-size:1rem;font-weight:700;color:var(--text);}
@@ -453,7 +453,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="form-group"><label class="form-label">IVA</label><input type="number" step="0.01" class="form-input" id="edit-iva"></div>
       <div class="form-group"><label class="form-label">Total</label><input type="number" step="0.01" class="form-input" id="edit-total"></div>
       <div class="form-group"><label class="form-label">OC</label><input class="form-input" id="edit-oc"></div>
-      <div class="form-group full"><label class="form-label">PDF de la factura</label><input type="file" accept="application/pdf,.pdf" class="form-input" id="edit-pdf"><div id="edit-pdf-status" style="font-size:.82rem;color:var(--muted);margin-top:.4rem">Sin cambios en el PDF</div></div>
+      <div class="form-group full" style="border-top:1px solid var(--border);padding-top:1rem;margin-top:.2rem"><label class="form-label" style="font-weight:700">PDF de la factura</label><input type="file" accept="application/pdf,.pdf" class="form-input" id="edit-pdf"><div id="edit-pdf-status" style="font-size:.82rem;color:var(--muted);margin-top:.4rem">Sin cambios en el PDF</div></div>
     </div>
     <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem"><button class="btn btn-outline" onclick="closeInvoiceEdit()">Cancelar</button><button class="btn btn-primary" onclick="saveInvoiceEdit()">Guardar cambios</button></div>
   </div>
