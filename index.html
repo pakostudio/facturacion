@@ -7,7 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
 <style>
 :root {
   --bg:#f4f6f9;--surface:#ffffff;--card:#ffffff;--border:#e2e7ef;
@@ -233,6 +233,8 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   .preview-grid{grid-template-columns:1fr;}
   .conc-row{align-items:flex-start;gap:.75rem;flex-direction:column;}
 }
+
+.action-group{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}.btn-sm{padding:.28rem .5rem!important;font-size:.68rem!important}.client-card.inactive{opacity:.58}.client-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}.client-actions{display:flex;gap:.35rem;flex-wrap:wrap}.billing-notice{display:none;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;color:#9a3412}.billing-notice.show{display:block}.billing-notice-title{font-weight:800;margin-bottom:.3rem}.billing-notice-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.3rem 0}.modal-wide{max-width:720px!important}.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-grid-2 .full{grid-column:1/-1}@media(max-width:700px){.form-grid-2{grid-template-columns:1fr}.form-grid-2 .full{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -265,6 +267,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 
   <!-- DASHBOARD -->
   <div id="view-dashboard" class="view active">
+    <div id="billing-notice" class="billing-notice"></div>
     <div class="page-header">
       <div class="page-title">Dashboard</div>
       <div class="page-sub">Resumen general de facturación — Marketing TDI</div>
@@ -355,7 +358,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 
   <!-- CLIENTES -->
   <div id="view-clientes" class="view">
-    <div class="page-header"><div class="page-title">Clientes</div><div class="page-sub">Directorio de clientes de Marketing TDI</div></div>
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:end;gap:1rem"><div><div class="page-title">Clientes</div><div class="page-sub">Directorio de clientes de Marketing TDI</div></div><button class="btn btn-primary" onclick="openClientModal()">+ Nuevo cliente</button></div>
     <div class="clients-grid" id="clients-grid"></div>
   </div>
 
@@ -363,15 +366,15 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   <div id="view-alertas" class="view">
     <div class="page-header">
       <div class="page-title">Alertas de Facturación</div>
-      <div class="page-sub">Configura el día del mes en que debes facturar a cada cliente — recibirás un correo 3 días antes</div>
+      <div class="page-sub">Configura el día del mes en que debes facturar a cada cliente — el sistema te avisará al abrirlo</div>
     </div>
     <div style="background:#ede9fe;border:1px solid #c4b5fd;border-radius:10px;padding:1rem 1.25rem;margin-bottom:1.5rem;font-size:.82rem;color:#4c1d95;">
-      📧 Los recordatorios se enviarán a <strong>francisco@marketingtdi.com</strong> · 3 días antes de la fecha configurada · Abre el portal para activar la revisión
+      🔔 El portal mostrará recordatorios 3 días antes y el día de facturación. El correo automático vía Resend se conectará en la siguiente etapa.
     </div>
     <div id="alertas-grid"></div>
     <div style="margin-top:1.5rem;display:flex;gap:.75rem;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="saveAlertConfig();checkAndSendAlerts()">💾 Guardar y verificar alertas ahora</button>
-      <button class="btn btn-outline" onclick="checkAndSendAlerts()">🔍 Verificar alertas sin guardar</button>
+      <button class="btn btn-primary" onclick="saveAlertConfig();checkAndSendAlerts()">💾 Guardar y verificar alertas</button>
+      <button class="btn btn-outline" onclick="checkAndSendAlerts()">🔍 Verificar alertas ahora</button>
     </div>
     <div id="alert-log" style="margin-top:1rem;font-size:.8rem;color:var(--muted);"></div>
   </div>
@@ -437,6 +440,37 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   </div>
 </div>
 
+
+<div class="modal-overlay" id="invoice-edit-modal">
+  <div class="modal modal-wide"><div class="modal-header"><div class="modal-title">Editar factura</div><button class="modal-close" onclick="closeInvoiceEdit()">✕</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label class="form-label">Folio</label><input class="form-input" id="edit-folio"></div>
+      <div class="form-group"><label class="form-label">Fecha</label><input type="date" class="form-input" id="edit-fecha"></div>
+      <div class="form-group"><label class="form-label">RFC receptor</label><input class="form-input" id="edit-rfc"></div>
+      <div class="form-group"><label class="form-label">Cliente</label><input class="form-input" id="edit-cliente"></div>
+      <div class="form-group full"><label class="form-label">Descripción</label><input class="form-input" id="edit-descripcion"></div>
+      <div class="form-group"><label class="form-label">Subtotal</label><input type="number" step="0.01" class="form-input" id="edit-subtotal"></div>
+      <div class="form-group"><label class="form-label">IVA</label><input type="number" step="0.01" class="form-input" id="edit-iva"></div>
+      <div class="form-group"><label class="form-label">Total</label><input type="number" step="0.01" class="form-input" id="edit-total"></div>
+      <div class="form-group"><label class="form-label">OC</label><input class="form-input" id="edit-oc"></div>
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem"><button class="btn btn-outline" onclick="closeInvoiceEdit()">Cancelar</button><button class="btn btn-primary" onclick="saveInvoiceEdit()">Guardar cambios</button></div>
+  </div>
+</div>
+<div class="modal-overlay" id="client-modal">
+  <div class="modal modal-wide"><div class="modal-header"><div class="modal-title" id="client-modal-title">Nuevo cliente</div><button class="modal-close" onclick="closeClientModal()">✕</button></div>
+    <div class="form-grid-2">
+      <div class="form-group"><label class="form-label">Razón social / nombre</label><input class="form-input" id="client-name"></div>
+      <div class="form-group"><label class="form-label">RFC</label><input class="form-input" id="client-rfc" style="text-transform:uppercase"></div>
+      <div class="form-group"><label class="form-label">Régimen fiscal</label><input class="form-input" id="client-regimen"></div>
+      <div class="form-group"><label class="form-label">Días de pago</label><input type="number" min="0" class="form-input" id="client-cond" value="30"></div>
+      <div class="form-group"><label class="form-label">Día de facturación</label><input type="number" min="1" max="28" class="form-input" id="client-dia" value="1"></div>
+      <div class="form-group"><label class="form-label">Requiere OC</label><select class="form-input" id="client-oc"><option value="false">No</option><option value="true">Sí</option></select></div>
+      <div class="form-group"><label class="form-label">Estatus</label><select class="form-input" id="client-active"><option value="true">Activo</option><option value="false">Inactivo</option></select></div>
+    </div>
+    <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem"><button class="btn btn-outline" onclick="closeClientModal()">Cancelar</button><button class="btn btn-primary" onclick="saveClient()">Guardar cliente</button></div>
+  </div>
+</div>
 <div class="drawer-overlay" id="dashboard-drawer" onclick="if(event.target===this) closeDashboardDetail()">
   <aside class="drawer" aria-label="Resumen de ficha">
     <div class="drawer-header">
@@ -496,15 +530,18 @@ const SEED_DATA = [
   {id:32,folio:"390",uuid:"CDE17E2E-FE7D-474B-B842-319B6968082B",fecha:"2026-05-20",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
 ];
 
-const CLIENTES_CATALOG = {
-  'MAD841018U49':{name:'LA MADRILEÑA',regimen:'623',cond:30,requiresOC:true},
-  'ATR050303H42':{name:'ALDAFA TRANSPORTES',regimen:'624',cond:30,requiresOC:false},
-  'RSL180402KH6':{name:'RAAF SERVICIOS LOGISTICOS',regimen:'601',cond:30,requiresOC:false},
-  'NME171017UI2':{name:'NUEVA MUSICA ESENCIAL',regimen:'601',cond:30,requiresOC:false},
-  'DIF211028G62':{name:'DIFERENCIARTE',regimen:'601',cond:30,requiresOC:false},
-  'CES801003T12':{name:'CESANTONI',regimen:'601',cond:30,requiresOC:false},
-  'PSO820923UH8':{name:'LA PUERTA DEL SOL',regimen:'601',cond:30,requiresOC:false},
+const CLIENTES_SEED = {
+  'MAD841018U49':{name:'LA MADRILEÑA',regimen:'623',cond:30,requiresOC:true,active:true},
+  'ATR050303H42':{name:'ALDAFA TRANSPORTES',regimen:'624',cond:30,requiresOC:false,active:true},
+  'RSL180402KH6':{name:'RAAF SERVICIOS LOGISTICOS',regimen:'601',cond:30,requiresOC:false,active:true},
+  'NME171017UI2':{name:'NUEVA MUSICA ESENCIAL',regimen:'601',cond:30,requiresOC:false,active:true},
+  'DIF211028G62':{name:'DIFERENCIARTE',regimen:'601',cond:30,requiresOC:false,active:true},
+  'CES801003T12':{name:'CESANTONI',regimen:'601',cond:30,requiresOC:false,active:true},
+  'PSO820923UH8':{name:'LA PUERTA DEL SOL',regimen:'601',cond:30,requiresOC:false,active:true},
 };
+let CLIENTES_CATALOG = JSON.parse(localStorage.getItem('tdi_clientes')||'null') || structuredClone(CLIENTES_SEED);
+Object.entries(CLIENTES_SEED).forEach(([rfc,c])=>{if(!CLIENTES_CATALOG[rfc]) CLIENTES_CATALOG[rfc]=c;});
+function saveClientes(){localStorage.setItem('tdi_clientes',JSON.stringify(CLIENTES_CATALOG));}
 
 // Inicializar: si no hay datos en localStorage o el seed tiene más registros, cargar seed
 let facturas = JSON.parse(localStorage.getItem('tdi_facturas')||'null');
@@ -525,7 +562,7 @@ if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
   localStorage.setItem('tdi_facturas',JSON.stringify(facturas));
 }
 
-let pendingFactura=null,pendingOC=null,pendingComplemento=null,editingId=null,selectedStatus=null;
+let pendingFactura=null,pendingOC=null,pendingComplemento=null,pendingFacturaFile=null,editingId=null,selectedStatus=null;
 function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
 
 document.getElementById('topbar-date').textContent=
@@ -536,7 +573,7 @@ function showView(id,el){
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('view-'+id).classList.add('active');
   if(el) el.classList.add('active');
-  if(id==='dashboard') renderDashboard();
+  if(id==='dashboard'){ renderDashboard(); renderBillingNotices(); }
   if(id==='facturas')  renderFacturasTable();
   if(id==='clientes')  renderClientes();
   if(id==='alertas')   renderAlertas();
@@ -724,7 +761,7 @@ function renderFacturasTable(){
     <td>${statusBadge(f)}</td>
     <td class="mono">${f.fechaPago||'—'}</td>
     <td>${complementoBadge(f)}${f.fechaComplemento?`<div class="mini-cell mono">${f.fechaComplemento}</div>`:''}</td>
-    <td><button class="btn btn-outline" style="padding:.3rem .7rem;font-size:.7rem" onclick="openModal(${f.id})">Editar</button></td>
+    <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="downloadInvoicePdf(${f.id})" title="Abrir/descargar PDF">PDF</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
   </tr>`).join('');
 }
 
@@ -764,20 +801,43 @@ function renderClientes(){
   grid.innerHTML=Object.entries(CLIENTES_CATALOG).map(([rfc,c])=>{
     const fs=facturas.filter(f=>f.rfcReceptor===rfc);
     const total=fs.reduce((s,f)=>s+f.total,0);
-    return `<div class="client-card">
-      <div class="client-name">${c.name}</div>
-      <div class="client-rfc">${rfc} · Reg. ${c.regimen}</div>
-      <div style="margin-bottom:.75rem">
-        ${c.requiresOC?'<span class="badge badge-purple">Requiere OC</span>':'<span class="badge badge-gray">Solo factura</span>'}
-        <span class="badge badge-gray" style="margin-left:.25rem">Pago ${c.cond} días</span>
-      </div>
-      <div class="client-stats">
-        <div class="client-stat"><div class="client-stat-val">${fs.length}</div><div class="client-stat-lbl">Facturas</div></div>
-        <div class="client-stat"><div class="client-stat-val" style="font-size:.85rem">${fmt(total)}</div><div class="client-stat-lbl">Total</div></div>
-      </div>
+    return `<div class="client-card ${c.active===false?'inactive':''}">
+      <div class="client-card-head"><div><div class="client-name">${c.name}</div><div class="client-rfc">${rfc} · Reg. ${c.regimen}</div></div><div class="client-actions"><button class="btn btn-outline btn-sm" onclick="openClientModal('${rfc}')">Editar</button><button class="btn btn-outline btn-sm" onclick="toggleClient('${rfc}')">${c.active===false?'Activar':'Desactivar'}</button><button class="btn btn-danger btn-sm" onclick="deleteClient('${rfc}')">Eliminar</button></div></div>
+      <div style="margin-bottom:.75rem">${c.active===false?'<span class="badge badge-gray">Inactivo</span> ':''}${c.requiresOC?'<span class="badge badge-purple">Requiere OC</span>':'<span class="badge badge-gray">Solo factura</span>'}<span class="badge badge-gray" style="margin-left:.25rem">Pago ${c.cond} días</span></div>
+      <div class="client-stats"><div class="client-stat"><div class="client-stat-val">${fs.length}</div><div class="client-stat-lbl">Facturas</div></div><div class="client-stat"><div class="client-stat-val" style="font-size:.85rem">${fmt(total)}</div><div class="client-stat-lbl">Total</div></div></div>
     </div>`;
   }).join('');
 }
+let editingClientRfc=null;
+function openClientModal(rfc=null){
+  editingClientRfc=rfc; const c=rfc?CLIENTES_CATALOG[rfc]:null;
+  document.getElementById('client-modal-title').textContent=c?'Editar cliente':'Nuevo cliente';
+  document.getElementById('client-name').value=c?.name||''; document.getElementById('client-rfc').value=rfc||''; document.getElementById('client-rfc').disabled=!!c;
+  document.getElementById('client-regimen').value=c?.regimen||''; document.getElementById('client-cond').value=c?.cond??30; document.getElementById('client-dia').value=(alertConfig[rfc]?.dia)||c?.diaFacturacion||1;
+  document.getElementById('client-oc').value=String(!!c?.requiresOC); document.getElementById('client-active').value=String(c?.active!==false);
+  document.getElementById('client-modal').classList.add('open');
+}
+function closeClientModal(){document.getElementById('client-modal').classList.remove('open');editingClientRfc=null;}
+function saveClient(){
+  const rfc=document.getElementById('client-rfc').value.trim().toUpperCase(), name=document.getElementById('client-name').value.trim(); if(!rfc||!name){toast('Nombre y RFC son obligatorios','⚠️');return;}
+  if(!editingClientRfc&&CLIENTES_CATALOG[rfc]){toast('Ese RFC ya existe','⚠️');return;}
+  CLIENTES_CATALOG[rfc]={name,regimen:document.getElementById('client-regimen').value.trim(),cond:parseInt(document.getElementById('client-cond').value)||0,requiresOC:document.getElementById('client-oc').value==='true',active:document.getElementById('client-active').value==='true'};
+  alertConfig[rfc]={...(alertConfig[rfc]||{}),active:alertConfig[rfc]?.active||false,dia:parseInt(document.getElementById('client-dia').value)||1}; localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig)); saveClientes(); closeClientModal(); renderClientes(); renderAlertas(); renderBillingNotices(); toast('Cliente guardado');
+}
+function toggleClient(rfc){CLIENTES_CATALOG[rfc].active=CLIENTES_CATALOG[rfc].active===false?true:false;saveClientes();renderClientes();renderAlertas();renderBillingNotices();toast(CLIENTES_CATALOG[rfc].active?'Cliente activado':'Cliente desactivado');}
+function deleteClient(rfc){const n=facturas.filter(f=>f.rfcReceptor===rfc).length;if(n){toast('No se puede eliminar: tiene '+n+' factura(s). Desactívalo.','⚠️');return;}if(!confirm('¿Eliminar definitivamente este cliente?'))return;delete CLIENTES_CATALOG[rfc];delete alertConfig[rfc];saveClientes();localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig));renderClientes();renderAlertas();renderBillingNotices();toast('Cliente eliminado');}
+
+// Edición y archivo PDF de facturas
+let invoiceEditId=null;
+function openInvoiceEdit(id){const f=facturas.find(x=>x.id===id);if(!f)return;invoiceEditId=id;['folio','fecha','rfc','cliente','descripcion','subtotal','iva','total','oc'].forEach(k=>{const map={rfc:'rfcReceptor'};document.getElementById('edit-'+k).value=f[map[k]||k]??'';});document.getElementById('invoice-edit-modal').classList.add('open');}
+function closeInvoiceEdit(){document.getElementById('invoice-edit-modal').classList.remove('open');invoiceEditId=null;}
+function saveInvoiceEdit(){const f=facturas.find(x=>x.id===invoiceEditId);if(!f)return;f.folio=document.getElementById('edit-folio').value.trim();f.fecha=document.getElementById('edit-fecha').value;f.rfcReceptor=document.getElementById('edit-rfc').value.trim().toUpperCase();f.cliente=document.getElementById('edit-cliente').value.trim();f.descripcion=document.getElementById('edit-descripcion').value.trim();f.subtotal=parseFloat(document.getElementById('edit-subtotal').value)||0;f.iva=parseFloat(document.getElementById('edit-iva').value)||0;f.total=parseFloat(document.getElementById('edit-total').value)||0;f.oc=document.getElementById('edit-oc').value.trim();save();closeInvoiceEdit();renderFacturasTable();renderDashboard();toast('Factura actualizada');}
+async function deleteInvoice(id){const f=facturas.find(x=>x.id===id);if(!f||!confirm(`¿Eliminar la factura ${f.folio} de ${f.cliente}? Esta acción no se puede deshacer.`))return;facturas=facturas.filter(x=>x.id!==id);save();await deletePdfBlob(id);renderFacturasTable();renderDashboard();renderClientes();renderBillingNotices();toast('Factura eliminada');}
+function pdfDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open('tdi_archivos',1);req.onupgradeneeded=()=>req.result.createObjectStore('pdfs');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+async function storePdfBlob(id,file){const db=await pdfDb();return new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put(file,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+async function getPdfBlob(id){const db=await pdfDb();return new Promise((res,rej)=>{const r=db.transaction('pdfs').objectStore('pdfs').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function deletePdfBlob(id){try{const db=await pdfDb();const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').delete(id);}catch(e){}}
+async function downloadInvoicePdf(id){const f=facturas.find(x=>x.id===id);const blob=await getPdfBlob(id);if(!blob){toast('Esta factura no tiene PDF almacenado. Los PDFs subidos antes de esta actualización deben volver a cargarse.','⚠️');return;}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Factura_${f?.folio||id}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 
 // PDF upload para nuevas facturas
 async function extractText(file){
@@ -872,6 +932,7 @@ async function processFile(file,type){
     const text=await extractText(file);
     if(type==='factura'){
       pendingFactura=parseFactura(text);
+      pendingFacturaFile=file;
       showPreviewFactura();
     }else{
       pendingOC=parseOC(text);
@@ -1023,16 +1084,17 @@ function showPreviewOC(){
     document.getElementById('match-result').innerHTML=`<div class="match-badge ${ok?'match-ok':'match-err'}">${ok?'✅ Montos coinciden · Total OC y Factura: '+fmt(facTotal):'⚠️ Montos no coinciden · OC: '+fmt(ocTotal)+' / Factura: '+fmt(facTotal)}</div>`;
   }
 }
-function saveFactura(){
+async function saveFactura(){
   if(!pendingFactura) return;
   if(pendingOC){pendingFactura.oc=pendingOC.oc;pendingFactura.totalOC=pendingOC.total;}
   pendingFactura.id=Date.now();
   facturas.unshift(pendingFactura);
+  if(pendingFacturaFile){try{await storePdfBlob(pendingFactura.id,pendingFacturaFile);pendingFactura.hasPdf=true;}catch(e){console.warn(e);}}
   save();toast('Factura '+pendingFactura.folio+' guardada');
   resetNueva();renderDashboard();
 }
 function resetNueva(){
-  pendingFactura=null;pendingOC=null;pendingComplemento=null;
+  pendingFactura=null;pendingOC=null;pendingComplemento=null;pendingFacturaFile=null;
   document.getElementById('preview-factura').style.display='none';
   document.getElementById('preview-oc').style.display='none';
   document.getElementById('preview-complemento').style.display='none';
@@ -1053,12 +1115,10 @@ function exportExcel(){
 }
 
 renderDashboard();
+setTimeout(()=>renderBillingNotices(),100);
 
-// ── EMAILJS ──────────────────────────────────────────────────────────────────
-const EJS_SERVICE  = 'service_qlidns7';
-const EJS_TEMPLATE = 'bajyqeo';
-const EJS_PUBKEY   = 'asd7_t22C934wMz9X';
-emailjs.init(EJS_PUBKEY);
+// ── CORREO ──────────────────────────────────────────────────────────────────
+// EmailJS retirado. El envío automático se conectará a Resend mediante una función segura en Vercel.
 
 // ── ALERTAS CONFIG ────────────────────────────────────────────────────────────
 let alertConfig = JSON.parse(localStorage.getItem('tdi_alertas')||'{}');
@@ -1073,6 +1133,7 @@ function saveAlertConfig(){
     if(chk&&dia) alertConfig[rfc]={active:chk.checked,dia:parseInt(dia.value)||1};
   });
   localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig));
+  renderBillingNotices();
   toast('Configuración guardada');
 }
 
@@ -1113,36 +1174,14 @@ function renderAlertas(){
 }
 
 async function checkAndSendAlerts(){
-  const log=document.getElementById('alert-log');
-  if(log) log.textContent='Verificando alertas…';
-  const hoy=new Date();
-  const enviados=[];
-  for(const [rfc,cfg] of Object.entries(alertConfig)){
-    if(!cfg.active) continue;
-    const proxFecha=new Date(hoy.getFullYear(),hoy.getMonth(),cfg.dia);
-    if(proxFecha<=hoy) proxFecha.setMonth(proxFecha.getMonth()+1);
-    const diff=Math.ceil((proxFecha-hoy)/(1000*60*60*24));
-    if(diff<=3&&diff>=0){
-      const cliente=CLIENTES_CATALOG[rfc]?.name||rfc;
-      const fechaStr=proxFecha.toLocaleDateString('es-MX',{day:'2-digit',month:'long',year:'numeric'});
-      try{
-        await emailjs.send(EJS_SERVICE,EJS_TEMPLATE,{
-          cliente,fecha:fechaStr,
-          dias:diff===0?'HOY':diff+' días',
-          name:'TDI Control',
-          email:'francisco@marketingtdi.com',
-          title:'Recordatorio Facturación'
-        });
-        enviados.push(cliente+' (en '+diff+' días)');
-      }catch(e){console.warn('EmailJS error:',e);}
-    }
-  }
-  if(log){
-    if(enviados.length) log.innerHTML='✅ Alertas enviadas:<br>'+enviados.map(x=>'· '+x).join('<br>');
-    else log.textContent='ℹ️ Sin alertas próximas esta vez.';
-  }
-  if(enviados.length) toast('Alertas enviadas: '+enviados.length,'📧');
+  const log=document.getElementById('alert-log'); const due=getBillingAlerts(3);
+  if(log) log.innerHTML=due.length?'🔔 Recordatorios detectados:<br>'+due.map(x=>`· ${x.cliente} — ${x.diff===0?'facturar hoy':'facturar en '+x.diff+' día(s)'}`).join('<br>')+'<br><br><strong>Correo:</strong> pendiente de conectar a Resend/Vercel.':'ℹ️ Sin alertas próximas esta vez.';
+  renderBillingNotices(); if(due.length) toast(due.length+' recordatorio(s) de facturación','🔔');
 }
+function hasInvoiceThisPeriod(rfc,date){return facturas.some(f=>f.rfcReceptor===rfc&&f.fecha&&new Date(f.fecha+'T12:00:00').getFullYear()===date.getFullYear()&&new Date(f.fecha+'T12:00:00').getMonth()===date.getMonth());}
+function getBillingAlerts(daysAhead=0){const hoy=new Date();hoy.setHours(0,0,0,0);const out=[];Object.entries(alertConfig).forEach(([rfc,cfg])=>{const c=CLIENTES_CATALOG[rfc];if(!cfg?.active||!c||c.active===false)return;let target=new Date(hoy.getFullYear(),hoy.getMonth(),Math.min(28,cfg.dia||1));target.setHours(0,0,0,0);if(target<hoy){target=new Date(hoy.getFullYear(),hoy.getMonth()+1,Math.min(28,cfg.dia||1));target.setHours(0,0,0,0);}const diff=Math.round((target-hoy)/86400000);if(diff>=0&&diff<=daysAhead&&!hasInvoiceThisPeriod(rfc,target))out.push({rfc,cliente:c.name,diff,target});});return out.sort((a,b)=>a.diff-b.diff);}
+function renderBillingNotices(){const box=document.getElementById('billing-notice');if(!box)return;const due=getBillingAlerts(3);if(!due.length){box.classList.remove('show');box.innerHTML='';return;}box.classList.add('show');box.innerHTML=`<div class="billing-notice-title">🔔 ${due.some(x=>x.diff===0)?'Facturación pendiente hoy':'Próximas facturas por emitir'}</div>${due.map(x=>`<div class="billing-notice-row"><span><strong>${x.cliente}</strong> · ${x.diff===0?'Hoy':x.diff===1?'Mañana':'En '+x.diff+' días'}</span><button class="btn btn-primary btn-sm" onclick="goNewInvoice()">Crear factura</button></div>`).join('')}`;}
+function goNewInvoice(){const nav=[...document.querySelectorAll('.nav-item')].find(n=>n.textContent.includes('Nueva Factura'));showView('nueva',nav);}
 
 // ── CONCILIACIÓN ──────────────────────────────────────────────────────────────
 function handleConcDrop(ev){
