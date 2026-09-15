@@ -7,8 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 :root {
@@ -19,22 +17,22 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;max-width:100vw;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;max-width:100vw;}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .topbar-brand{display:flex;align-items:center;gap:.75rem;}
 .topbar-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;}
 .topbar-title{font-weight:700;font-size:1rem;letter-spacing:-.02em;color:var(--text);}
 .topbar-sub{font-size:.7rem;color:var(--muted);font-family:var(--mono);}
 .topbar-date{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
-.layout{display:flex;height:calc(100vh - 60px);min-height:0;width:100%;max-width:100vw;overflow:hidden;}
-.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:relative;height:100%;overflow-y:auto;box-shadow:1px 0 4px rgba(0,0,0,.04);}
+.layout{display:flex;min-height:calc(100vh - 60px);width:100%;max-width:100vw;overflow:hidden;}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;box-shadow:1px 0 4px rgba(0,0,0,.04);}
 .nav-section{margin-bottom:1.5rem;}
 .nav-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding:0 1.25rem;margin-bottom:.5rem;}
 .nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.25rem;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
 .nav-item:hover{color:var(--accent);background:rgba(91,79,207,.05);}
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,79,207,.08);font-weight:600;}
 .nav-icon{font-size:1rem;width:18px;text-align:center;}
-.main{flex:1;min-width:0;width:calc(100vw - 220px);max-width:calc(100vw - 220px);height:100%;padding:1.75rem 1.5rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);box-sizing:border-box;}
+.main{flex:1;min-width:0;width:calc(100vw - 220px);max-width:calc(100vw - 220px);padding:1.75rem 1.5rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);box-sizing:border-box;}
 .view{display:none;}.view.active{display:block;}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
@@ -81,13 +79,13 @@ table{width:100%;border-collapse:collapse;font-size:.78rem;table-layout:fixed;}
 .facturas-table{width:100%;max-width:100%;table-layout:fixed;}
 .facturas-table th:nth-child(1),.facturas-table td:nth-child(1){width:6%;}
 .facturas-table th:nth-child(2),.facturas-table td:nth-child(2){width:10%;}
-.facturas-table th:nth-child(3),.facturas-table td:nth-child(3){width:22%;}
+.facturas-table th:nth-child(3),.facturas-table td:nth-child(3){width:25%;}
 .facturas-table th:nth-child(4),.facturas-table td:nth-child(4){width:13%;}
-.facturas-table th:nth-child(5),.facturas-table td:nth-child(5){width:10%;}
+.facturas-table th:nth-child(5),.facturas-table td:nth-child(5){width:13%;}
 .facturas-table th:nth-child(6),.facturas-table td:nth-child(6){width:11%;}
 .facturas-table th:nth-child(7),.facturas-table td:nth-child(7){width:9%;}
 .facturas-table th:nth-child(8),.facturas-table td:nth-child(8){width:8%;}
-.facturas-table th:nth-child(9),.facturas-table td:nth-child(9){width:11%;}
+.facturas-table th:nth-child(9),.facturas-table td:nth-child(9){width:5%;}
 .facturas-table th,.facturas-table td{padding:.55rem .5rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .facturas-table .badge{max-width:100%;overflow:hidden;text-overflow:ellipsis;font-size:.66rem;padding:.16rem .45rem;}
 .facturas-table .btn{padding:.25rem .42rem!important;font-size:.66rem!important;}
@@ -104,7 +102,7 @@ tr:hover td{background:#f8faff;}
 .badge-red{background:#fee2e2;color:#991b1b;}
 .badge-purple{background:#ede9fe;color:#4c1d95;}
 .badge-gray{background:#f3f4f6;color:#4b5563;}
-.upload-section{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.25rem;margin-bottom:2rem;}
+.upload-section{display:grid;grid-template-columns:repeat(3,minmax(220px,1fr));gap:1.5rem;margin-bottom:2rem;}
 .upload-card{background:#fff;border:2px dashed var(--border);border-radius:14px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.04);}
 .upload-card:hover,.upload-card.drag{border-color:var(--accent);background:#f5f3ff;}
 .upload-icon{font-size:2.5rem;margin-bottom:.75rem;}
@@ -172,11 +170,6 @@ tr:hover td{background:#f8faff;}
 .conc-row-info{display:flex;flex-direction:column;gap:.1rem;}
 .conc-row-monto{font-family:var(--mono);font-weight:700;color:var(--green);}
 .conc-row-fecha{font-family:var(--mono);font-size:.7rem;color:var(--muted);}
-.conc-filter-bar{display:grid;grid-template-columns:minmax(220px,1.2fr) minmax(150px,.7fr) minmax(150px,.7fr) auto;gap:.65rem;align-items:end;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.75rem;margin-bottom:.75rem;}
-.conc-filter-field{display:flex;flex-direction:column;gap:.3rem;}
-.conc-filter-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#92400e;}
-.conc-filter-meta{font-size:.72rem;color:#92400e;margin:.15rem 0 .65rem;}
-.conc-filter-empty{background:#fff;border:1px dashed #f59e0b;border-radius:8px;padding:1rem;text-align:center;font-size:.78rem;color:#92400e;}
 .conc-apply-btn{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;cursor:pointer;}
 .conc-apply-btn:hover{opacity:.85;}
 .conc-applied{background:#d1fae5;color:#065f46;border-radius:6px;padding:.3rem .75rem;font-size:.7rem;font-weight:600;}
@@ -221,40 +214,6 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 .drawer-empty{padding:1rem;border:1px dashed var(--border);border-radius:10px;color:var(--muted);font-size:.85rem;text-align:center;}
 @media (max-width:760px){.drawer{width:100vw;padding:1rem;}.drawer-kpis{grid-template-columns:1fr;}.drawer-row{grid-template-columns:1fr;}.drawer-row-amount{text-align:left;}}
 
-
-.filter-panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:1rem;margin-bottom:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
-.filter-panel-grid{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:.7rem;align-items:end;}
-.filter-field{display:flex;flex-direction:column;gap:.3rem;min-width:0;}
-.filter-field label{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);}
-.filter-summary{margin-top:.65rem;font-size:.72rem;color:var(--muted);}
-.aging-wrap{margin:-.5rem 0 1.5rem;}
-.aging-title{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:.55rem;}
-.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;}
-.aging-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.75rem .85rem;box-shadow:0 1px 3px rgba(0,0,0,.04);}
-.aging-label{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
-.aging-value{font-family:var(--mono);font-size:.9rem;font-weight:800;margin-top:.25rem;}
-.aging-count{font-size:.65rem;color:var(--muted);margin-top:.15rem;}
-.invoice-view-modal{width:min(1180px,calc(100vw - 32px));max-width:1180px!important;}
-.invoice-view-grid{display:grid;grid-template-columns:310px minmax(0,1fr);gap:1rem;min-height:520px;}
-.invoice-meta-card{background:#f8fafc;border:1px solid var(--border);border-radius:12px;padding:1rem;align-self:start;}
-.invoice-meta-row{padding:.45rem 0;border-bottom:1px solid #e8edf4;}
-.invoice-meta-row:last-child{border-bottom:none;}
-.invoice-meta-label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;}
-.invoice-meta-value{font-size:.8rem;font-weight:650;margin-top:.15rem;word-break:break-word;}
-.invoice-pdf-pane{background:#eef2f7;border:1px solid var(--border);border-radius:12px;overflow:hidden;min-height:520px;display:flex;align-items:stretch;justify-content:center;}
-.invoice-pdf-pane iframe{width:100%;height:70vh;min-height:520px;border:0;background:#fff;}
-.invoice-pdf-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem;color:var(--muted);gap:.6rem;}
-.import-preview-table{width:100%;table-layout:auto;font-size:.72rem;}
-.import-preview-table th,.import-preview-table td{padding:.45rem .55rem;white-space:normal;}
-.import-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:.65rem;margin-bottom:1rem;}
-.import-summary-card{background:#f8fafc;border:1px solid var(--border);border-radius:9px;padding:.7rem;}
-.import-summary-card strong{display:block;font-family:var(--mono);font-size:1rem;margin-top:.2rem;}
-.batch-list{margin-top:.75rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
-.batch-row{display:grid;grid-template-columns:80px 1fr 120px 120px;gap:.6rem;padding:.5rem .65rem;border-bottom:1px solid var(--border);font-size:.72rem;background:#fff;align-items:center;}
-.batch-row:last-child{border-bottom:none;}
-.batch-row-head{background:#f8fafc;font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;}
-.status-note{font-size:.63rem;color:var(--muted);margin-top:.16rem;white-space:normal;}
-@media (max-width:1250px){.filter-panel-grid{grid-template-columns:repeat(3,minmax(150px,1fr));}.invoice-view-grid{grid-template-columns:280px minmax(0,1fr);}}
 @media (max-width:1100px){
   .main{max-width:calc(100vw - 220px);padding:1.5rem;}
   .upload-section{grid-template-columns:1fr;}
@@ -262,45 +221,20 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   .filter-input,.filter-select,.btn{width:100%;justify-content:center;}
 }
 @media (max-width:760px){
-  body{height:auto;overflow:auto;}
   .topbar{padding:0 1rem;}
   .topbar-date{display:none;}
-  .layout{display:block;height:auto;overflow:visible;}
+  .layout{display:block;overflow:visible;}
   .sidebar{position:relative;top:auto;width:100%;height:auto;display:flex;overflow-x:auto;padding:.5rem 0;}
   .nav-section{display:flex;margin-bottom:0;}
   .nav-label{display:none;}
   .nav-item{white-space:nowrap;border-left:none;border-bottom:2px solid transparent;}
   .nav-item.active{border-left:none;border-bottom-color:var(--accent);}
-  .main{max-width:100vw;height:auto;padding:1rem;overflow:visible;}
+  .main{max-width:100vw;padding:1rem;}
   .preview-grid{grid-template-columns:1fr;}
   .conc-row{align-items:flex-start;gap:.75rem;flex-direction:column;}
-  .conc-filter-bar{grid-template-columns:1fr;}
-  .filter-panel-grid,.aging-grid,.import-summary{grid-template-columns:1fr;}
-  .invoice-view-grid{grid-template-columns:1fr;}
-  .invoice-pdf-pane iframe{height:55vh;min-height:420px;}
-  .batch-row{grid-template-columns:70px 1fr;}
-  .batch-row > :nth-child(3),.batch-row > :nth-child(4){display:none;}
 }
 
 .action-group{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}.btn-sm{padding:.28rem .5rem!important;font-size:.68rem!important}.client-card.inactive{opacity:.58}.client-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}.client-actions{display:flex;gap:.35rem;flex-wrap:wrap}.billing-notice{display:none;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;color:#9a3412}.billing-notice.show{display:block}.billing-notice-title{font-weight:800;margin-bottom:.3rem}.billing-notice-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.3rem 0}.modal-wide{max-width:720px!important}.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-grid-2 .full{grid-column:1/-1}@media(max-width:700px){.form-grid-2{grid-template-columns:1fr}.form-grid-2 .full{grid-column:auto}}
-
-.report-modal{width:min(1220px,calc(100vw - 28px));max-width:1220px!important;}
-.report-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:.65rem;margin-bottom:.8rem;}
-.report-quick{display:flex;gap:.5rem;flex-wrap:wrap;margin:.25rem 0 .9rem;}
-.report-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin:.8rem 0;}
-.report-kpi{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.75rem;}
-.report-kpi-label{font-size:.61rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;}
-.report-kpi-value{font-family:var(--mono);font-size:.92rem;font-weight:800;margin-top:.2rem;}
-.report-preview-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;max-height:46vh;background:#fff;}
-.report-preview-table{width:100%;font-size:.7rem;}
-.report-preview-table th{position:sticky;top:0;background:#f8fafc;z-index:1;}
-.report-preview-table th,.report-preview-table td{padding:.48rem .55rem;white-space:nowrap;}
-.report-filter-summary{font-size:.7rem;color:var(--muted);padding:.55rem .7rem;background:#f8fafc;border:1px solid var(--border);border-radius:9px;margin-bottom:.75rem;}
-.report-actions{display:flex;gap:.55rem;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:1rem;}
-.report-actions-right{display:flex;gap:.55rem;flex-wrap:wrap;}
-@media(max-width:1100px){.report-filter-grid{grid-template-columns:repeat(3,minmax(150px,1fr));}.report-kpis{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:700px){.report-filter-grid,.report-kpis{grid-template-columns:1fr;}.report-modal{width:calc(100vw - 14px);}.report-actions-right{width:100%;}.report-actions-right .btn{width:100%;}}
-
 </style>
 </head>
 <body>
@@ -338,31 +272,11 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="page-title">Dashboard</div>
       <div class="page-sub">Resumen general de facturación — Marketing TDI</div>
     </div>
-    <div class="filter-panel">
-      <div class="filter-panel-grid">
-        <div class="filter-field"><label>Cliente</label><select class="filter-select" id="dash-client" onchange="renderDashboard()"><option value="">Todos</option></select></div>
-        <div class="filter-field"><label>RFC</label><input class="filter-input" id="dash-rfc" placeholder="RFC receptor" oninput="renderDashboard()"></div>
-        <div class="filter-field"><label>Folio / búsqueda</label><input class="filter-input" id="dash-search" placeholder="Folio, OC, descripción" oninput="renderDashboard()"></div>
-        <div class="filter-field"><label>Estatus</label><select class="filter-select" id="dash-status" onchange="renderDashboard()"><option value="">Todos</option><option value="pendiente">Pendiente</option><option value="pagado">Pagado</option><option value="vencido">Vencido</option></select></div>
-        <div class="filter-field"><label>Desde</label><input type="date" class="filter-input" id="dash-from" onchange="renderDashboard()"></div>
-        <div class="filter-field"><label>Hasta</label><input type="date" class="filter-input" id="dash-to" onchange="renderDashboard()"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;gap:1rem;align-items:center;margin-top:.7rem;flex-wrap:wrap"><div class="filter-summary" id="dash-filter-summary"></div><button class="btn btn-outline btn-sm" onclick="clearDashboardFilters()">Limpiar filtros</button></div>
-    </div>
     <div class="stats-grid">
       <div class="stat-card purple clickable" data-dashboard-type="total" role="button" tabindex="0" onclick="openDashboardDetail('total')" onkeydown="handleStatKey(event,'total')"><div class="stat-label">Total Facturado</div><div class="stat-value purple" id="stat-total">$0.00</div><div class="stat-sub" id="stat-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
       <div class="stat-card green clickable" data-dashboard-type="cobrado" role="button" tabindex="0" onclick="openDashboardDetail('cobrado')" onkeydown="handleStatKey(event,'cobrado')"><div class="stat-label">Total Cobrado</div><div class="stat-value green" id="stat-cobrado">$0.00</div><div class="stat-sub" id="stat-cobrado-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
       <div class="stat-card yellow clickable" data-dashboard-type="pendiente" role="button" tabindex="0" onclick="openDashboardDetail('pendiente')" onkeydown="handleStatKey(event,'pendiente')"><div class="stat-label">Pendiente de Cobro</div><div class="stat-value yellow" id="stat-pendiente">$0.00</div><div class="stat-sub" id="stat-pendiente-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
-      <div class="stat-card red clickable" data-dashboard-type="vencido" role="button" tabindex="0" onclick="openDashboardDetail('vencido')" onkeydown="handleStatKey(event,'vencido')"><div class="stat-label">Vencidas</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
-    </div>
-    <div class="aging-wrap">
-      <div class="aging-title">Antigüedad de cartera pendiente</div>
-      <div class="aging-grid">
-        <div class="aging-card"><div class="aging-label">0–30 días</div><div class="aging-value" id="aging-0-30">$0.00</div><div class="aging-count" id="aging-count-0-30">0 facturas</div></div>
-        <div class="aging-card"><div class="aging-label">31–60 días</div><div class="aging-value" id="aging-31-60">$0.00</div><div class="aging-count" id="aging-count-31-60">0 facturas</div></div>
-        <div class="aging-card"><div class="aging-label">61–90 días</div><div class="aging-value" id="aging-61-90">$0.00</div><div class="aging-count" id="aging-count-61-90">0 facturas</div></div>
-        <div class="aging-card"><div class="aging-label">+90 días</div><div class="aging-value" id="aging-90">$0.00</div><div class="aging-count" id="aging-count-90">0 facturas</div></div>
-      </div>
+      <div class="stat-card red clickable" data-dashboard-type="vencido" role="button" tabindex="0" onclick="openDashboardDetail('vencido')" onkeydown="handleStatKey(event,'vencido')"><div class="stat-label">Vencidas (+30 días)</div><div class="stat-value red" id="stat-vencido">$0.00</div><div class="stat-sub" id="stat-vencido-count">0 facturas</div><div class="stat-action">Ver detalle →</div></div>
     </div>
     <div class="alerts-box" id="alerts-box" style="display:none">
       <div class="alerts-title">⚠️ Facturas próximas a vencer (5 días)</div>
@@ -370,7 +284,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     </div>
     <div class="page-header" style="margin-top:1.5rem"><div class="page-title" style="font-size:1rem">Todas las facturas</div></div>
     <div class="table-wrap">
-      <table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estatus Pago</th><th>OC</th><th>Ver</th></tr></thead>
+      <table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estatus Pago</th><th>OC</th></tr></thead>
       <tbody id="dash-table-body"></tbody></table>
     </div>
   </div>
@@ -389,10 +303,6 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
         <option value="vencido">❌ Vencido</option>
       </select>
       <select class="filter-select" onchange="renderFacturasTable()" id="filter-mes"><option value="">Todos los meses</option></select>
-      <input type="date" class="filter-input" onchange="renderFacturasTable()" id="filter-fecha-desde" title="Fecha desde">
-      <input type="date" class="filter-input" onchange="renderFacturasTable()" id="filter-fecha-hasta" title="Fecha hasta">
-      <button class="btn btn-outline" onclick="clearFacturaFilters()">Limpiar</button>
-      <button class="btn btn-primary" onclick="openReportModal()">📊 Generar reporte</button>
       <button class="btn btn-green" onclick="exportExcel()">⬇️ Exportar Excel</button>
     </div>
     <div class="table-wrap">
@@ -411,8 +321,8 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="upload-card" id="drop-factura" onclick="document.getElementById('input-factura').click()"
         ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'factura')">
         <div class="upload-icon">🧾</div><div class="upload-title">PDF de Factura</div>
-        <div class="upload-sub">Selecciona una o varias facturas PDF</div>
-        <input type="file" id="input-factura" class="upload-input" accept=".pdf" multiple onchange="handleFile(this,'factura')">
+        <div class="upload-sub">Arrastra o haz clic para seleccionar</div>
+        <input type="file" id="input-factura" class="upload-input" accept=".pdf" onchange="handleFile(this,'factura')">
       </div>
       <div class="upload-card" id="drop-oc" onclick="document.getElementById('input-oc').click()"
         ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event,'oc')">
@@ -425,11 +335,6 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
         <div class="upload-icon">📄</div><div class="upload-title">XML Complemento de Pago</div>
         <div class="upload-sub">Hace match por UUID y marca como realizado</div>
         <input type="file" id="input-complemento" class="upload-input" accept=".xml,text/xml,application/xml" onchange="handleFile(this,'complemento')">
-      </div>
-      <div class="upload-card" id="drop-clientes-bulk" onclick="openClientImportPicker()"
-        ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleClientImportDrop(event)">
-        <div class="upload-icon">🏢</div><div class="upload-title">Carga masiva de clientes</div>
-        <div class="upload-sub">Excel o CSV · RFC, razón social y condiciones</div>
       </div>
     </div>
     <div id="preview-factura" class="preview-card" style="display:none">
@@ -447,14 +352,13 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div id="complemento-match-result"></div>
     </div>
     <div id="save-section" style="display:none;margin-top:1rem;">
-      <button class="btn btn-primary" id="save-factura-btn" onclick="saveFactura()" style="padding:.6rem 1.5rem;font-size:.9rem;">💾 Guardar Factura</button>
+      <button class="btn btn-primary" onclick="saveFactura()" style="padding:.6rem 1.5rem;font-size:.9rem;">💾 Guardar Factura</button>
     </div>
   </div>
 
   <!-- CLIENTES -->
   <div id="view-clientes" class="view">
-    <div class="page-header" style="display:flex;justify-content:space-between;align-items:end;gap:1rem;flex-wrap:wrap"><div><div class="page-title">Clientes</div><div class="page-sub">Directorio de clientes de Marketing TDI</div></div><div style="display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-outline" onclick="downloadClientTemplate()">⬇️ Plantilla Excel</button><button class="btn btn-outline" onclick="openClientImportPicker()">⬆️ Importar clientes</button><button class="btn btn-primary" onclick="openClientModal()">+ Nuevo cliente</button></div></div>
-    <div class="toolbar"><input class="filter-input" id="client-search" placeholder="Buscar cliente o RFC…" oninput="renderClientes()"><select class="filter-select" id="client-status-filter" onchange="renderClientes()"><option value="">Todos</option><option value="active">Activos</option><option value="inactive">Inactivos</option></select></div>
+    <div class="page-header" style="display:flex;justify-content:space-between;align-items:end;gap:1rem"><div><div class="page-title">Clientes</div><div class="page-sub">Directorio de clientes de Marketing TDI</div></div><button class="btn btn-primary" onclick="openClientModal()">+ Nuevo cliente</button></div>
     <div class="clients-grid" id="clients-grid"></div>
   </div>
 
@@ -494,11 +398,17 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     <div id="conc-file-list" style="margin-bottom:1rem;"></div>
     <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">⏳ Leyendo estados de cuenta…</div>
     <div id="conc-results" class="conc-results"></div>
+    <div style="margin-top:2rem">
+      <div class="page-header" style="margin-bottom:1rem"><div class="page-title" style="font-size:1.15rem">Estados de cuenta guardados</div><div class="page-sub">Consulta, descarga, reemplaza o elimina los PDFs que ya anexaste.</div></div>
+      <div style="overflow-x:auto;background:white;border:1px solid var(--border);border-radius:10px">
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr style="background:#f8fafc;text-align:left"><th style="padding:.75rem">Banco</th><th style="padding:.75rem">Periodo</th><th style="padding:.75rem">Archivo</th><th style="padding:.75rem">Fecha de carga</th><th style="padding:.75rem">Acciones</th></tr></thead><tbody id="statement-library-body"></tbody></table>
+      </div>
+      <input type="file" id="statement-replace-input" accept="application/pdf,.pdf" style="display:none" onchange="replaceStatementFile(this)">
+    </div>
   </div>
 
 </main>
 </div>
-<input type="file" id="client-import-input" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleClientImportFile(this)">
 
 <!-- MODAL -->
 <div class="modal-overlay" id="status-modal">
@@ -569,72 +479,6 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     <div style="display:flex;gap:.75rem;justify-content:flex-end;margin-top:1rem"><button class="btn btn-outline" onclick="closeClientModal()">Cancelar</button><button class="btn btn-primary" onclick="saveClient()">Guardar cliente</button></div>
   </div>
 </div>
-
-<div class="modal-overlay" id="invoice-view-modal">
-  <div class="modal invoice-view-modal">
-    <div class="modal-header"><div><div class="modal-title" id="invoice-view-title">Factura</div><div class="drawer-sub" id="invoice-view-sub"></div></div><button class="modal-close" onclick="closeInvoiceViewer()">✕</button></div>
-    <div class="invoice-view-grid">
-      <div>
-        <div class="invoice-meta-card" id="invoice-view-meta"></div>
-        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem"><button class="btn btn-primary btn-sm" onclick="downloadViewedPdf()">⬇️ Descargar PDF</button><button class="btn btn-outline btn-sm" onclick="editViewedInvoice()">✏️ Editar</button><button class="btn btn-outline btn-sm" onclick="statusViewedInvoice()">💳 Pago</button></div>
-      </div>
-      <div class="invoice-pdf-pane" id="invoice-pdf-pane"><div class="invoice-pdf-empty">Cargando PDF…</div></div>
-    </div>
-  </div>
-</div>
-<div class="modal-overlay" id="client-import-modal">
-  <div class="modal modal-wide">
-    <div class="modal-header"><div><div class="modal-title">Carga masiva de clientes</div><div class="drawer-sub" id="client-import-file-name"></div></div><button class="modal-close" onclick="closeClientImportModal()">✕</button></div>
-    <div class="import-summary" id="client-import-summary"></div>
-    <div style="max-height:360px;overflow:auto;border:1px solid var(--border);border-radius:10px"><table class="import-preview-table"><thead><tr><th>RFC</th><th>Cliente</th><th>Régimen</th><th>Días pago</th><th>OC</th></tr></thead><tbody id="client-import-preview"></tbody></table></div>
-    <div style="font-size:.7rem;color:var(--muted);margin-top:.7rem">Columnas aceptadas: RFC, Cliente/Razón Social, Régimen, Días Pago, Requiere OC, Día Facturación y Estatus. Los RFC existentes se actualizan sin borrar datos no incluidos.</div>
-    <div style="display:flex;gap:.6rem;justify-content:space-between;flex-wrap:wrap;margin-top:1rem"><button class="btn btn-outline" onclick="downloadClientTemplate()">⬇️ Descargar plantilla</button><div style="display:flex;gap:.6rem"><button class="btn btn-outline" onclick="closeClientImportModal()">Cancelar</button><button class="btn btn-primary" id="client-import-commit" onclick="commitClientImport()">Importar clientes</button></div></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="report-modal">
-  <div class="modal report-modal">
-    <div class="modal-header">
-      <div><div class="modal-title">Reporte de facturación y cobranza</div><div class="drawer-sub">Filtra la cartera y genera PDF, Excel o una versión para imprimir.</div></div>
-      <button class="modal-close" onclick="closeReportModal()">✕</button>
-    </div>
-    <div class="report-quick">
-      <button class="btn btn-outline btn-sm" onclick="resetReportToScreenFilters()">Vista actual</button>
-      <button class="btn btn-outline btn-sm" onclick="setReportPreset('pendiente')">Cartera pendiente</button>
-      <button class="btn btn-outline btn-sm" onclick="setReportPreset('vencido')">Facturas vencidas</button>
-      <button class="btn btn-outline btn-sm" onclick="setReportPreset('pagado')">Pagos recibidos</button>
-      <button class="btn btn-outline btn-sm" onclick="clearReportFilters()">Limpiar</button>
-    </div>
-    <div class="report-filter-grid">
-      <div class="filter-field"><label>Cliente</label><select class="filter-select" id="report-client" onchange="renderReportPreview()"><option value="">Todos</option></select></div>
-      <div class="filter-field"><label>RFC</label><input class="filter-input" id="report-rfc" placeholder="RFC receptor" oninput="renderReportPreview()"></div>
-      <div class="filter-field"><label>Estatus</label><select class="filter-select" id="report-status" onchange="renderReportPreview()"><option value="">Todos</option><option value="pendiente">Pendiente (incluye vencidas)</option><option value="vencido">Vencida</option><option value="pagado">Pagada</option><option value="complemento">Con complemento</option></select></div>
-      <div class="filter-field"><label>Desde</label><input type="date" class="filter-input" id="report-from" onchange="renderReportPreview()"></div>
-      <div class="filter-field"><label>Hasta</label><input type="date" class="filter-input" id="report-to" onchange="renderReportPreview()"></div>
-      <div class="filter-field"><label>Folio / búsqueda</label><input class="filter-input" id="report-search" placeholder="Folio, OC, descripción" oninput="renderReportPreview()"></div>
-    </div>
-    <div class="report-filter-summary" id="report-filter-summary"></div>
-    <div class="report-kpis">
-      <div class="report-kpi"><div class="report-kpi-label">Facturas</div><div class="report-kpi-value" id="report-kpi-count">0</div></div>
-      <div class="report-kpi"><div class="report-kpi-label">Total facturado</div><div class="report-kpi-value" id="report-kpi-total">$0.00</div></div>
-      <div class="report-kpi"><div class="report-kpi-label">Cobrado</div><div class="report-kpi-value" id="report-kpi-paid">$0.00</div></div>
-      <div class="report-kpi"><div class="report-kpi-label">Pendiente</div><div class="report-kpi-value" id="report-kpi-pending">$0.00</div></div>
-      <div class="report-kpi"><div class="report-kpi-label">Vencido</div><div class="report-kpi-value" id="report-kpi-overdue">$0.00</div></div>
-    </div>
-    <div class="report-preview-wrap">
-      <table class="report-preview-table"><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>RFC</th><th>Total</th><th>Estatus</th><th>F. pago</th><th>Vencimiento</th><th>Días vencida</th><th>OC</th></tr></thead><tbody id="report-preview-body"></tbody></table>
-    </div>
-    <div class="report-actions">
-      <div class="drawer-sub">El reporte usa exclusivamente los registros que aparecen en esta vista previa.</div>
-      <div class="report-actions-right">
-        <button class="btn btn-outline" onclick="printReport()">🖨️ Imprimir</button>
-        <button class="btn btn-green" onclick="exportReportExcel()">⬇️ Excel</button>
-        <button class="btn btn-primary" onclick="exportReportPdf()">📄 PDF</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div class="drawer-overlay" id="dashboard-drawer" onclick="if(event.target===this) closeDashboardDetail()">
   <aside class="drawer" aria-label="Resumen de ficha">
     <div class="drawer-header">
@@ -660,38 +504,72 @@ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/p
 
 // ── DATOS PRECARGADOS ─────────────────────────────────────────────────────
 const SEED_DATA = [
-  {id:1,folio:"346",uuid:"088E3346-D742-423E-B124-4BC41193ED4F",fecha:"2026-01-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:1,folio:"346",uuid:"088E3346-D742-423E-B124-4BC41193ED4F",fecha:"2026-01-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
   {id:2,folio:"347",uuid:"C458A915-7D38-49A8-B26C-E62D4E4751F8",fecha:"2026-01-16",rfcReceptor:"NME171017UI2",cliente:"NUEVA MUSICA ESENCIAL",descripcion:"Servicios de Marketing + Campaña Digital",subtotal:24935.75,iva:3989.72,total:28925.47,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
   {id:3,folio:"348",uuid:"E71DA6E8-6754-4B07-8C19-7CF7295944D2",fecha:"2026-01-16",rfcReceptor:"NME171017UI2",cliente:"NUEVA MUSICA ESENCIAL",descripcion:"Servicios de Marketing + Campaña Digital",subtotal:26887.57,iva:4302.01,total:31189.58,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:4,folio:"356",uuid:"96267AB3-1307-4B0D-92BB-F752A7ADF916",fecha:"2026-01-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:4,folio:"356",uuid:"96267AB3-1307-4B0D-92BB-F752A7ADF916",fecha:"2026-01-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Ene)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
   {id:5,folio:"357",uuid:"56396308-0B97-431D-9894-6299F18A6638",fecha:"2026-01-26",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:67359.60,iva:10777.54,total:78137.14,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:6,folio:"361",uuid:"EDCFB610-CCC2-4D36-93BF-2BFA69D88AE3",fecha:"2026-02-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:7,folio:"363",uuid:"10A62109-5A1C-48C9-B88E-1D4F12115234",fecha:"2026-02-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:8,folio:"365",uuid:"ED39286E-635C-46B3-806B-31F961355A81",fecha:"2026-03-02",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:9,folio:"366",uuid:"B8D5E825-6803-4EBA-8FB7-AFE42F319F6D",fecha:"2026-03-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:10,folio:"368",uuid:"E6C8C6BD-CD05-4A9C-A7EA-431240E3F4B6",fecha:"2026-04-01",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:11,folio:"369",uuid:"882AAABA-FB72-4195-9B38-F676BA71170F",fecha:"2026-04-06",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:12,folio:"370",uuid:"2ADE5AB9-FEF4-4D8A-89F4-081B11FC3032",fecha:"2026-04-06",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:13,folio:"371",uuid:"38218678-F447-43BA-AF9B-3988156BB2AB",fecha:"2026-04-14",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:14,folio:"372",uuid:"7CB320E1-51B0-45AF-B9C4-101C23DB05B7",fecha:"2026-04-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:15,folio:"373",uuid:"65D40FA4-8F3A-4A66-8F1F-162573C93144",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032087"},
-  {id:16,folio:"374",uuid:"905A7933-C480-4997-BF1E-B92A9F12E78D",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO PUBLICIDAD EN INTERNET",subtotal:200000,iva:32000,total:232000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032090"},
+  {id:6,folio:"361",uuid:"EDCFB610-CCC2-4D36-93BF-2BFA69D88AE3",fecha:"2026-02-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:7,folio:"363",uuid:"10A62109-5A1C-48C9-B88E-1D4F12115234",fecha:"2026-02-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Feb)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:8,folio:"365",uuid:"ED39286E-635C-46B3-806B-31F961355A81",fecha:"2026-03-02",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:9,folio:"366",uuid:"B8D5E825-6803-4EBA-8FB7-AFE42F319F6D",fecha:"2026-03-23",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Mar)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:10,folio:"368",uuid:"E6C8C6BD-CD05-4A9C-A7EA-431240E3F4B6",fecha:"2026-04-01",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:11,folio:"369",uuid:"882AAABA-FB72-4195-9B38-F676BA71170F",fecha:"2026-04-06",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:12,folio:"370",uuid:"2ADE5AB9-FEF4-4D8A-89F4-081B11FC3032",fecha:"2026-04-06",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:13,folio:"371",uuid:"38218678-F447-43BA-AF9B-3988156BB2AB",fecha:"2026-04-14",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:14,folio:"372",uuid:"7CB320E1-51B0-45AF-B9C4-101C23DB05B7",fecha:"2026-04-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad Abr)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:15,folio:"373",uuid:"65D40FA4-8F3A-4A66-8F1F-162573C93144",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500.00,iva:880.00,total:6380.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032087"},
+  {id:16,folio:"374",uuid:"905A7933-C480-4997-BF1E-B92A9F12E78D",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO PUBLICIDAD EN INTERNET",subtotal:200000.00,iva:32000.00,total:232000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032090"},
   {id:17,folio:"375",uuid:"F6C72929-277A-468F-9FE7-EA2D6E34A890",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO PUBLICIDAD EN INTERNET (Pauta Digital META)",subtotal:5590.92,iva:894.55,total:6485.47,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032091"},
-  {id:18,folio:"376",uuid:"560AD271-C34C-435E-986D-775788420658",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"FEE DISEÑO (Ene-Abr 2026)",subtotal:300000,iva:48000,total:348000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032155"},
-  {id:19,folio:"377",uuid:"852B1450-E355-458A-90BC-C9C48AF02E94",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO DE ADAPTACIONES DE MATERIALES PUBLICITARIOS",subtotal:11000,iva:1760,total:12760,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032150"},
-  {id:20,folio:"378",uuid:"ADA464FD-6291-42EF-AB16-62EE1A441F1F",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO (Ene-Abr 2026)",subtotal:300000,iva:48000,total:348000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032153"},
-  {id:21,folio:"379",uuid:"249D8392-08FA-4101-892C-E20A687B93F6",fecha:"2026-05-04",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing + Campañas TikTok/Digital Mar",subtotal:21933,iva:3509.28,total:25442.28,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:22,folio:"380",uuid:"3D3563B9-31F3-48B7-B212-B68EE409916A",fecha:"2026-05-04",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing + Campaña RAAF Mar",subtotal:25566,iva:4090.56,total:29656.56,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:23,folio:"381",uuid:"0C7CF036-3452-4D08-ADE6-0444FED0D0DA",fecha:"2026-05-04",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:24,folio:"382",uuid:"54CC858A-BAC9-44DF-8660-215202D470FF",fecha:"2026-05-11",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032424"},
-  {id:25,folio:"383",uuid:"3B25928B-2682-45C1-A489-4A00C09DCBC2",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO — Diseño multimarca",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032606"},
-  {id:26,folio:"384",uuid:"C264E61B-B48A-42DE-9ABE-5152770F4D05",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:50000,iva:8000,total:58000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:27,folio:"385",uuid:"6B5E123D-5D28-4ACD-B6AE-1D25D7A7A18C",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500,iva:880,total:6380,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:28,folio:"386",uuid:"2259D14C-FF8B-4BF9-8040-3DEEA2747078",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:29,folio:"387",uuid:"CDDD4339-5AF6-48F7-A8AF-B4A9619CAEEE",fecha:"2026-05-20",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:75000,iva:12000,total:87000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:30,folio:"388",uuid:"B4539520-5D01-40B4-A641-F4C48AC73D55",fecha:"2026-05-20",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:20000,iva:3200,total:23200,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:31,folio:"389",uuid:"1D372AA2-390B-400B-B52F-492CDBF0B823",fecha:"2026-05-20",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:25000,iva:4000,total:29000,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
-  {id:32,folio:"390",uuid:"CDE17E2E-FE7D-474B-B842-319B6968082B",fecha:"2026-05-20",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000,iva:19680,total:142680,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:18,folio:"376",uuid:"560AD271-C34C-435E-986D-775788420658",fecha:"2026-04-28",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"FEE DISEÑO (Ene-Abr 2026)",subtotal:300000.00,iva:48000.00,total:348000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032155"},
+  {id:19,folio:"377",uuid:"852B1450-E355-458A-90BC-C9C48AF02E94",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO DE ADAPTACIONES DE MATERIALES PUBLICITARIOS",subtotal:11000.00,iva:1760.00,total:12760.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032150"},
+  {id:20,folio:"378",uuid:"ADA464FD-6291-42EF-AB16-62EE1A441F1F",fecha:"2026-04-29",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO (Ene-Abr 2026)",subtotal:300000.00,iva:48000.00,total:348000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032153"},
+  {id:21,folio:"379",uuid:"249D8392-08FA-4101-892C-E20A687B93F6",fecha:"2026-05-04",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"Servicios de Marketing + Campañas TikTok/Digital Mar",subtotal:21933.00,iva:3509.28,total:25442.28,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:22,folio:"380",uuid:"3D3563B9-31F3-48B7-B212-B68EE409916A",fecha:"2026-05-04",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"Servicios de Marketing + Campaña RAAF Mar",subtotal:25566.00,iva:4090.56,total:29656.56,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:23,folio:"381",uuid:"0C7CF036-3452-4D08-ADE6-0444FED0D0DA",fecha:"2026-05-04",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000.00,iva:19680.00,total:142680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:24,folio:"382",uuid:"54CC858A-BAC9-44DF-8660-215202D470FF",fecha:"2026-05-11",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500.00,iva:880.00,total:6380.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032424"},
+  {id:25,folio:"383",uuid:"3B25928B-2682-45C1-A489-4A00C09DCBC2",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO — Diseño multimarca",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:"OCMAD000032606"},
+  {id:26,folio:"384",uuid:"C264E61B-B48A-42DE-9ABE-5152770F4D05",fecha:"2026-05-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:50000.00,iva:8000.00,total:58000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:27,folio:"385",uuid:"6B5E123D-5D28-4ACD-B6AE-1D25D7A7A18C",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"SERVICIO FEE DISEÑO",subtotal:5500.00,iva:880.00,total:6380.00,estatusSAT:"cancelada",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:28,folio:"386",uuid:"2259D14C-FF8B-4BF9-8040-3DEEA2747078",fecha:"2026-05-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:29,folio:"387",uuid:"CDDD4339-5AF6-48F7-A8AF-B4A9619CAEEE",fecha:"2026-05-20",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"Servicios de Marketing",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:30,folio:"388",uuid:"B4539520-5D01-40B4-A641-F4C48AC73D55",fecha:"2026-05-20",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:31,folio:"389",uuid:"1D372AA2-390B-400B-B52F-492CDBF0B823",fecha:"2026-05-20",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"Servicios de Marketing (Mensualidad May)",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:32,folio:"390",uuid:"CDE17E2E-FE7D-474B-B842-319B6968082B",fecha:"2026-05-20",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"Servicios de Marketing",subtotal:123000.00,iva:19680.00,total:142680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:33,folio:"402",uuid:"9E6BDA4D-75A8-4A4D-8104-59B7C3FEDAED",fecha:"2026-06-02",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:34,folio:"403",uuid:"05B8568B-A301-49B7-8C74-74C0C7FADAD3",fecha:"2026-06-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"",subtotal:21933.00,iva:3509.28,total:25442.28,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:35,folio:"404",uuid:"6D7F5519-314A-4E98-9186-85FDBB594AC7",fecha:"2026-06-03",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"",subtotal:25566.00,iva:4090.56,total:29656.56,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:36,folio:"405",uuid:"29D07BCE-9109-48A2-88EC-382A999041CA",fecha:"2026-06-03",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"",subtotal:21933.00,iva:3509.28,total:25442.28,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:37,folio:"406",uuid:"32170734-F724-4408-A3F0-46B1FE6FADB2",fecha:"2026-06-03",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"",subtotal:25566.00,iva:4090.56,total:29656.56,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:38,folio:"409",uuid:"8A9C4BAA-E106-415B-A7CA-71D269856659",fecha:"2026-06-18",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:39,folio:"410",uuid:"AB41A048-C9B6-4560-8453-C24AB15BD68E",fecha:"2026-06-22",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"",subtotal:123000.00,iva:19680.00,total:142680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:40,folio:"411",uuid:"D9956E95-D2C2-463F-B29B-1A74F5247E2D",fecha:"2026-06-22",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:41,folio:"412",uuid:"ABF3497D-DE53-419B-B01B-5D42EF93D484",fecha:"2026-06-22",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:42,folio:"417",uuid:"2F317D8B-BA54-48C7-B2BD-9C0071E3BF02",fecha:"2026-06-24",rfcReceptor:"BIB150316JU8",cliente:"BEBIDAS INTERNACIONALES BEPENSA",descripcion:"",subtotal:48000.00,iva:7680.00,total:55680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:43,folio:"418",uuid:"AFD6C1D5-0DC5-47DC-820C-1622BE96B65E",fecha:"2026-06-26",rfcReceptor:"FPZ990616ES3",cliente:"FONDO PLATA ZACATECAS 158127",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:44,folio:"421",uuid:"39A38DAE-FD1B-45C0-9E7E-9AAD9A4D741D",fecha:"2026-07-06",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:45,folio:"422",uuid:"6271D7B9-442D-43E2-ABE7-981259DDD6CD",fecha:"2026-07-06",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"",subtotal:25082.87,iva:4013.26,total:29096.13,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:46,folio:"423",uuid:"34EEF7AE-64FE-443A-8957-751345BDDFB7",fecha:"2026-07-07",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:1500.00,iva:240.00,total:1740.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:47,folio:"424",uuid:"10CBAEC3-F660-4C3E-919F-97C067DBE986",fecha:"2026-07-08",rfcReceptor:"NODE760130246",cliente:"EDSON JAVIER NOYOLA DIAZ",descripcion:"",subtotal:23500.00,iva:3760.00,total:27260.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:48,folio:"425",uuid:"0F82136F-CFCE-45D6-A49E-FBC64B198D8A",fecha:"2026-07-14",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:49,folio:"426",uuid:"8902D2AA-7E02-4F9E-8A50-9731CD02615C",fecha:"2026-07-15",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:50,folio:"427",uuid:"1C098AAE-EA88-415D-9586-81C1B1066DEE",fecha:"2026-07-24",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:51,folio:"429",uuid:"DD7DE5C8-675E-45B4-B994-9B18C3AFAEF8",fecha:"2026-07-25",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:52,folio:"430",uuid:"78374C25-7132-4C2E-AB68-8659856ED5E7",fecha:"2026-07-25",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"",subtotal:123000.00,iva:19680.00,total:142680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:53,folio:"431",uuid:"52F1E310-1940-4EF1-8D07-3B2D4C0F591D",fecha:"2026-07-25",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:54,folio:"435",uuid:"9433544B-CF41-4E15-AA5A-271ADDE426F5",fecha:"2026-07-31",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"",subtotal:10000.00,iva:1600.00,total:11600.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:55,folio:"442",uuid:"DC62F687-97CF-4901-8456-68C0D195592D",fecha:"2026-08-11",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:56,folio:"443",uuid:"601BFC14-AF76-4F75-B621-2DFA91FEB3F7",fecha:"2026-08-11",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:57,folio:"444",uuid:"1E66577B-D627-4B8B-B999-B6508610A4FE",fecha:"2026-08-11",rfcReceptor:"CES801003T12",cliente:"CESANTONI",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:58,folio:"445",uuid:"96BD3C8A-06F8-4152-B421-12986F772FAF",fecha:"2026-08-12",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:59,folio:"446",uuid:"ACBAAD6E-5967-4C75-BDB2-7316755535DB",fecha:"2026-08-26",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:75000.00,iva:12000.00,total:87000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:60,folio:"447",uuid:"4EFC50FC-DF94-400C-A5D6-9F612DB71945",fecha:"2026-08-26",rfcReceptor:"BIB150316JU8",cliente:"BEBIDAS INTERNACIONALES BEPENSA",descripcion:"",subtotal:1500.00,iva:240.00,total:1740.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:61,folio:"448",uuid:"E522B2AC-2EED-48ED-B303-DC0A69FCF79F",fecha:"2026-08-26",rfcReceptor:"DIF211028G62",cliente:"DIFERENCIARTE",descripcion:"",subtotal:25000.00,iva:4000.00,total:29000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:62,folio:"449",uuid:"FD209DCF-A65A-40F9-9699-84CECFF3E6E6",fecha:"2026-08-26",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"",subtotal:123000.00,iva:19680.00,total:142680.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:63,folio:"451",uuid:"29C6F3B9-C66B-4EE2-937A-F58DC049443B",fecha:"2026-08-31",rfcReceptor:"MAD841018U49",cliente:"LA MADRILEÑA",descripcion:"",subtotal:200000.00,iva:32000.00,total:232000.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:64,folio:"452",uuid:"47E392D0-9777-4A43-ACF2-4974E33CADA2",fecha:"2026-09-02",rfcReceptor:"ATR050303H42",cliente:"ALDAFA TRANSPORTES",descripcion:"",subtotal:20000.00,iva:3200.00,total:23200.00,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:65,folio:"453",uuid:"4E588350-119D-4117-9E20-3855AB97740B",fecha:"2026-09-02",rfcReceptor:"PSO820923UH8",cliente:"LA PUERTA DEL SOL",descripcion:"",subtotal:134989.60,iva:21598.34,total:156587.94,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""},
+  {id:66,folio:"455",uuid:"44923BFD-296B-4E3F-893E-910FB80DD707",fecha:"2026-09-02",rfcReceptor:"RSL180402KH6",cliente:"RAAF SERVICIOS LOGISTICOS",descripcion:"",subtotal:24956.00,iva:3992.96,total:28948.96,estatusSAT:"vigente",estatusPago:"pendiente",fechaPago:"",montoPago:"",fechaComplemento:"",oc:""}
 ];
 
 const CLIENTES_SEED = {
@@ -703,21 +581,30 @@ const CLIENTES_SEED = {
   'CES801003T12':{name:'CESANTONI',regimen:'601',cond:30,requiresOC:false,active:true},
   'PSO820923UH8':{name:'LA PUERTA DEL SOL',regimen:'601',cond:30,requiresOC:false,active:true},
 };
-const storedClientesRaw=localStorage.getItem('tdi_clientes');
-let CLIENTES_CATALOG = storedClientesRaw ? JSON.parse(storedClientesRaw) : structuredClone(CLIENTES_SEED);
+let CLIENTES_CATALOG = JSON.parse(localStorage.getItem('tdi_clientes')||'null') || structuredClone(CLIENTES_SEED);
+Object.entries(CLIENTES_SEED).forEach(([rfc,c])=>{if(!CLIENTES_CATALOG[rfc]) CLIENTES_CATALOG[rfc]=c;});
 function saveClientes(){localStorage.setItem('tdi_clientes',JSON.stringify(CLIENTES_CATALOG));}
 
-// Datos base solo la primera vez. Después se respeta exactamente lo guardado por el usuario.
-const storedFacturasRaw=localStorage.getItem('tdi_facturas');
-let facturas;
-try{facturas=storedFacturasRaw===null?null:JSON.parse(storedFacturasRaw);}catch(e){facturas=null;}
-if(!Array.isArray(facturas)){
-  facturas = SEED_DATA.map(f=>({...f,createdAt:new Date().toISOString()}));
+// Inicializar: si no hay datos en localStorage o el seed tiene más registros, cargar seed
+let facturas = JSON.parse(localStorage.getItem('tdi_facturas')||'null');
+if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
+  // Preservar estatus de pago de registros existentes
+  const existing = {};
+  if(facturas) facturas.forEach(f=>{ existing[f.folio]=f; });
+  facturas = SEED_DATA.map(f=>({
+    ...f,
+    createdAt: existing[f.folio]?.createdAt||new Date().toISOString(),
+    estatusPago: existing[f.folio]?.estatusPago||f.estatusPago,
+    fechaPago:   existing[f.folio]?.fechaPago||f.fechaPago,
+    montoPago:   existing[f.folio]?.montoPago||f.montoPago,
+    fechaComplemento: existing[f.folio]?.fechaComplemento||f.fechaComplemento,
+    fechaPagoComp:    existing[f.folio]?.fechaPagoComp||'',
+    complementoUuid: existing[f.folio]?.complementoUuid||'',
+  }));
   localStorage.setItem('tdi_facturas',JSON.stringify(facturas));
 }
 
-let pendingFactura=null,pendingOC=null,pendingComplemento=null,pendingFacturaFile=null,pendingFacturaBatch=[],editingId=null,selectedStatus=null;
-let pendingClientImport=[],pendingClientImportInvalid=[],viewingInvoiceId=null,invoiceObjectUrl=null;
+let pendingFactura=null,pendingOC=null,pendingComplemento=null,pendingFacturaFile=null,editingId=null,selectedStatus=null;
 function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
 
 document.getElementById('topbar-date').textContent=
@@ -733,6 +620,7 @@ function showView(id,el){
   if(id==='clientes')  renderClientes();
   if(id==='alertas')   renderAlertas();
   if(id==='nueva')     resetNueva();
+  if(id==='conciliacion') renderStatementLibrary();
 }
 
 function toast(msg,emoji='✅'){
@@ -740,19 +628,21 @@ function toast(msg,emoji='✅'){
   t.innerHTML=emoji+' '+msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDashboardDetail();closeInvoiceViewer();closeClientImportModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeDashboardDetail();});
 
 function fmt(n){return '$'+(n||0).toLocaleString('es-MX',{minimumFractionDigits:2,maximumFractionDigits:2});}
 
-function invoiceDate(f){const d=new Date((f.fecha||'')+'T12:00:00');return isNaN(d)?null:d;}
-function paymentTermsDays(f){const raw=CLIENTES_CATALOG[f.rfcReceptor]?.cond;return raw===undefined||raw===null||raw===''?30:Math.max(0,Number(raw)||0);}
-function dueDate(f){const d=invoiceDate(f);if(!d)return null;const out=new Date(d);out.setDate(out.getDate()+paymentTermsDays(f));return out;}
-function todayNoon(){const t=new Date();t.setHours(12,0,0,0);return t;}
-function daysOverdue(f){const d=dueDate(f);if(!d)return 0;return Math.max(0,Math.round((todayNoon().getTime()-d.getTime())/86400000));}
-function daysToDue(f){const d=dueDate(f);if(!d)return null;return Math.round((d.getTime()-todayNoon().getTime())/86400000);}
-function isVencido(f){if(f.estatusPago!=='pendiente') return false;const d=dueDate(f);return !!d&&todayNoon().getTime()>d.getTime();}
-function isProximoVencer(f){if(f.estatusPago!=='pendiente') return false;const n=daysToDue(f);return n!==null&&n>=0&&n<=5;}
-function paymentStatusNote(f){if(f.estatusPago==='pagado'||f.estatusPago==='complemento')return f.fechaPago?'Pagada '+f.fechaPago:'Pagada';if(isVencido(f))return daysOverdue(f)+' día'+(daysOverdue(f)===1?'':'s')+' vencida';const n=daysToDue(f);return n===null?'':n===0?'Vence hoy':n>0?'Vence en '+n+' día'+(n===1?'':'s'):'';}
+function isVencido(f){
+  if(f.estatusPago!=='pendiente') return false;
+  const d=new Date(f.fecha);if(!d) return false;
+  return (Date.now()-d.getTime())>30*24*3600*1000;
+}
+function isProximoVencer(f){
+  if(f.estatusPago!=='pendiente') return false;
+  const d=new Date(f.fecha);if(!d) return false;
+  const diff=30*24*3600*1000-(Date.now()-d.getTime());
+  return diff>0&&diff<=5*24*3600*1000;
+}
 function statusBadge(f){
   if(isVencido(f))                    return '<span class="badge badge-red">❌ Vencida</span>';
   if(f.estatusPago==='pagado')        return '<span class="badge badge-green">✅ Pagado</span>';
@@ -770,11 +660,10 @@ let activeDashboardType='total';
 function handleStatKey(e,type){if(e.key==='Enter'||e.key===' '){e.preventDefault();openDashboardDetail(type);}}
 function daysSince(fecha){const d=new Date(fecha);if(isNaN(d)) return 0;return Math.max(0,Math.floor((Date.now()-d.getTime())/(24*3600*1000)));}
 function getDashboardItems(type){
-  const base=getDashboardFilteredFacturas();
-  if(type==='cobrado') return base.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
-  if(type==='pendiente') return base.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
-  if(type==='vencido') return base.filter(f=>isVencido(f));
-  return [...base];
+  if(type==='cobrado') return facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
+  if(type==='pendiente') return facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
+  if(type==='vencido') return facturas.filter(f=>isVencido(f));
+  return [...facturas];
 }
 function groupSum(items,keyFn){
   const map={};
@@ -786,7 +675,7 @@ function dashboardMeta(type){
     total:{title:'Total facturado',sub:'Todas las facturas registradas en el control.',color:'purple'},
     cobrado:{title:'Total cobrado',sub:'Facturas marcadas como pagadas o con complemento.',color:'green'},
     pendiente:{title:'Pendiente de cobro',sub:'Facturas pendientes que todavía no superan 30 días.',color:'yellow'},
-    vencido:{title:'Vencidas',sub:'Pendientes que superaron el plazo de pago configurado para el cliente.',color:'red'}
+    vencido:{title:'Vencidas +30 días',sub:'Pendientes con más de 30 días desde emisión.',color:'red'}
   }[type]||{title:'Resumen',sub:'Detalle ejecutivo',color:'purple'};
 }
 function openDashboardDetail(type){
@@ -807,7 +696,7 @@ function openDashboardDetail(type){
     <div class="drawer-kpi"><div class="drawer-kpi-label">Promedio</div><div class="drawer-kpi-value">${fmt(avg)}</div></div>
   `;
   const topFacturas=items.slice(0,10).map(f=>{
-    const extra= type==='vencido'?` · ${daysOverdue(f)} días vencida`: type==='pendiente'?` · ${daysSince(f.fecha)} días transcurridos`: f.fechaPago?` · pago ${f.fechaPago}`:'';
+    const extra= type==='vencido'?` · ${daysSince(f.fecha)-30} días vencida`: type==='pendiente'?` · ${daysSince(f.fecha)} días transcurridos`: f.fechaPago?` · pago ${f.fechaPago}`:'';
     return `<div class="drawer-row"><div><div class="drawer-row-title">Folio ${f.folio} · ${f.cliente}</div><div class="drawer-row-meta">${f.fecha}${extra} · OC: ${f.oc||'—'} · ${f.rfcReceptor}</div></div><div class="drawer-row-amount">${fmt(f.total)}</div></div>`;
   }).join('') || '<div class="drawer-empty">No hay facturas en esta ficha.</div>';
   const clientRows=clientes.map(([c,v])=>`<div class="drawer-row"><div class="drawer-row-title">${c}</div><div class="drawer-row-amount">${fmt(v)}</div></div>`).join('') || '<div class="drawer-empty">Sin clientes para mostrar.</div>';
@@ -826,22 +715,13 @@ function applyDashboardFilter(){
   closeDashboardDetail();
   const nav=[...document.querySelectorAll('.nav-item')].find(n=>n.textContent.includes('Facturas'));
   showView('facturas',nav);
-  const dashClient=document.getElementById('dash-client')?.value||'';
-  const dashRfc=(document.getElementById('dash-rfc')?.value||'').trim();
-  const dashSearch=(document.getElementById('dash-search')?.value||'').trim();
-  const dashFrom=document.getElementById('dash-from')?.value||'';
-  const dashTo=document.getElementById('dash-to')?.value||'';
-  const dashStatus=document.getElementById('dash-status')?.value||'';
-  document.getElementById('filter-cliente').value=dashClient;
-  document.getElementById('search-input').value=dashSearch||dashRfc;
+  document.getElementById('search-input').value='';
+  document.getElementById('filter-cliente').value='';
   document.getElementById('filter-mes').value='';
-  document.getElementById('filter-fecha-desde').value=dashFrom;
-  document.getElementById('filter-fecha-hasta').value=dashTo;
-  const mapped=activeDashboardType==='vencido'?'vencido':activeDashboardType==='pendiente'?'pendiente':activeDashboardType==='cobrado'?'pagado':dashStatus;
-  document.getElementById('filter-status').value=mapped||'';
-  renderFacturasTable();toast('Vista filtrada aplicada');
+  document.getElementById('filter-status').value= activeDashboardType==='vencido'?'vencido': activeDashboardType==='pendiente'?'pendiente': activeDashboardType==='cobrado'?'pagado':'';
+  renderFacturasTable();
+  toast('Vista filtrada aplicada');
 }
-
 function exportDashboardDetail(){
   const meta=dashboardMeta(activeDashboardType);
   const items=getDashboardItems(activeDashboardType);
@@ -854,103 +734,65 @@ function exportDashboardDetail(){
   toast('Resumen exportado');
 }
 
-function syncDashboardFilterOptions(){
-  const sel=document.getElementById('dash-client');if(!sel)return;
-  const current=sel.value;
-  const values=[...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))].sort((a,b)=>(CLIENTES_CATALOG[a]?.name||a).localeCompare(CLIENTES_CATALOG[b]?.name||b,'es'));
-  sel.innerHTML='<option value="">Todos</option>'+values.map(r=>`<option value="${r}">${CLIENTES_CATALOG[r]?.name||facturas.find(f=>f.rfcReceptor===r)?.cliente||r}</option>`).join('');
-  if(values.includes(current))sel.value=current;
-}
-function getDashboardFilteredFacturas(){
-  const client=document.getElementById('dash-client')?.value||'';
-  const rfc=(document.getElementById('dash-rfc')?.value||'').trim().toLowerCase();
-  const q=(document.getElementById('dash-search')?.value||'').trim().toLowerCase();
-  const status=document.getElementById('dash-status')?.value||'';
-  const from=document.getElementById('dash-from')?.value||'';
-  const to=document.getElementById('dash-to')?.value||'';
-  return facturas.filter(f=>{
-    if(client&&f.rfcReceptor!==client)return false;
-    if(rfc&&!String(f.rfcReceptor||'').toLowerCase().includes(rfc))return false;
-    if(q&&!([f.folio,f.cliente,f.rfcReceptor,f.oc,f.uuid,f.descripcion].some(v=>String(v||'').toLowerCase().includes(q))))return false;
-    if(from&&String(f.fecha||'')<from)return false;
-    if(to&&String(f.fecha||'')>to)return false;
-    if(status==='vencido'&&!isVencido(f))return false;
-    if(status==='pendiente'&&!(f.estatusPago==='pendiente'&&!isVencido(f)))return false;
-    if(status==='pagado'&&!(f.estatusPago==='pagado'||f.estatusPago==='complemento'))return false;
-    return true;
-  });
-}
-function clearDashboardFilters(){['dash-rfc','dash-search','dash-from','dash-to'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});['dash-client','dash-status'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderDashboard();}
-function renderAging(data){
-  const pending=data.filter(f=>f.estatusPago==='pendiente');
-  const buckets=[{id:'0-30',min:0,max:30},{id:'31-60',min:31,max:60},{id:'61-90',min:61,max:90},{id:'90',min:91,max:Infinity}];
-  buckets.forEach(b=>{const rows=pending.filter(f=>{const age=daysSince(f.fecha);return age>=b.min&&age<=b.max;});const amt=rows.reduce((s,f)=>s+(Number(f.total)||0),0);document.getElementById('aging-'+b.id).textContent=fmt(amt);document.getElementById('aging-count-'+b.id).textContent=rows.length+' factura'+(rows.length===1?'':'s');});
-}
 function renderDashboard(){
-  syncDashboardFilterOptions();
-  const data=getDashboardFilteredFacturas();
-  const total=data.reduce((s,f)=>s+(Number(f.total)||0),0);
-  const cobRows=data.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
-  const penRows=data.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f));
-  const venRows=data.filter(f=>isVencido(f));
-  const cobrado=cobRows.reduce((s,f)=>s+(Number(f.total)||0),0);
-  const pendiente=penRows.reduce((s,f)=>s+(Number(f.total)||0),0);
-  const vencido=venRows.reduce((s,f)=>s+(Number(f.total)||0),0);
+  const total    =facturas.reduce((s,f)=>s+f.total,0);
+  const cobrado  =facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').reduce((s,f)=>s+f.total,0);
+  const pendiente=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).reduce((s,f)=>s+f.total,0);
+  const vencido  =facturas.filter(f=>isVencido(f)).reduce((s,f)=>s+f.total,0);
   document.getElementById('stat-total').textContent=fmt(total);
-  document.getElementById('stat-count').textContent=data.length+' facturas';
+  document.getElementById('stat-count').textContent=facturas.length+' facturas';
   document.getElementById('stat-cobrado').textContent=fmt(cobrado);
-  document.getElementById('stat-cobrado-count').textContent=cobRows.length+' facturas';
+  document.getElementById('stat-cobrado-count').textContent=facturas.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').length+' facturas';
   document.getElementById('stat-pendiente').textContent=fmt(pendiente);
-  document.getElementById('stat-pendiente-count').textContent=penRows.length+' facturas';
+  document.getElementById('stat-pendiente-count').textContent=facturas.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)).length+' facturas';
   document.getElementById('stat-vencido').textContent=fmt(vencido);
-  document.getElementById('stat-vencido-count').textContent=venRows.length+' facturas';
-  renderAging(data);
-  const summary=document.getElementById('dash-filter-summary');if(summary)summary.textContent=`Mostrando ${data.length} de ${facturas.length} facturas · ${fmt(total)} facturados`;
-  const proximas=data.filter(isProximoVencer);
+  document.getElementById('stat-vencido-count').textContent=facturas.filter(f=>isVencido(f)).length+' facturas';
+  const proximas=facturas.filter(isProximoVencer);
   const alertBox=document.getElementById('alerts-box');
-  if(proximas.length){alertBox.style.display='block';document.getElementById('alerts-list').innerHTML=proximas.map(f=>`<div class="alert-item">Factura ${f.folio} · ${f.cliente} · <span>${fmt(f.total)} · ${paymentStatusNote(f)}</span></div>`).join('');} else alertBox.style.display='none';
+  if(proximas.length){
+    alertBox.style.display='block';
+    document.getElementById('alerts-list').innerHTML=proximas.map(f=>`<div class="alert-item">Factura ${f.folio} · ${f.cliente} · <span>${fmt(f.total)}</span></div>`).join('');
+  } else { alertBox.style.display='none'; }
   const tbody=document.getElementById('dash-table-body');
-  if(!data.length){tbody.innerHTML='<tr><td colspan="7" class="empty">No hay facturas con estos filtros</td></tr>';return;}
-  tbody.innerHTML=[...data].sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))).map(f=>`<tr>
-    <td class="mono">${f.folio}</td><td class="mono">${f.fecha}</td><td>${f.cliente}<div class="mini-cell mono">${f.rfcReceptor||''}</div></td>
-    <td class="mono"><strong>${fmt(f.total)}</strong></td><td>${statusBadge(f)}<div class="status-note">${paymentStatusNote(f)}</div></td><td class="mono">${f.oc||'—'}</td>
-    <td><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${f.id})" title="Ver factura">👁 Ver</button></td></tr>`).join('');
+  tbody.innerHTML=facturas.map(f=>`<tr>
+    <td class="mono">${f.folio}</td>
+    <td class="mono">${f.fecha}</td>
+    <td>${f.cliente}</td>
+    <td class="mono"><strong>${fmt(f.total)}</strong></td>
+    <td>${statusBadge(f)}</td>
+    <td class="mono">${f.oc||'—'}</td>
+  </tr>`).join('');
 }
 
-function ensureFacturaFilterOptions(){
+function renderFacturasTable(){
+  const search =document.getElementById('search-input').value.toLowerCase();
+  const cliente=document.getElementById('filter-cliente').value;
+  const status =document.getElementById('filter-status').value;
+  const mes    =document.getElementById('filter-mes').value;
+
   const selC=document.getElementById('filter-cliente');
-  const currentClient=selC.value;
-  const clientRfcs=[...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))].sort((a,b)=>(CLIENTES_CATALOG[a]?.name||a).localeCompare(CLIENTES_CATALOG[b]?.name||b,'es'));
-  selC.innerHTML='<option value="">Todos los clientes</option>'+clientRfcs.map(rfc=>`<option value="${rfc}">${CLIENTES_CATALOG[rfc]?.name||facturas.find(f=>f.rfcReceptor===rfc)?.cliente||rfc}</option>`).join('');
-  if(clientRfcs.includes(currentClient))selC.value=currentClient;
+  if(selC.children.length<=1){
+    [...new Set(facturas.map(f=>f.rfcReceptor))].forEach(rfc=>{
+      const o=document.createElement('option');o.value=rfc;
+      o.textContent=CLIENTES_CATALOG[rfc]?.name||rfc;selC.appendChild(o);
+    });
+  }
   const selM=document.getElementById('filter-mes');
-  const currentMonth=selM.value;
-  const months=[...new Set(facturas.map(f=>f.fecha?.substring(0,7)).filter(Boolean))].sort().reverse();
-  selM.innerHTML='<option value="">Todos los meses</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
-  if(months.includes(currentMonth))selM.value=currentMonth;
-}
-function getFilteredFacturas(){
-  const search=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
-  const cliente=document.getElementById('filter-cliente')?.value||'';
-  const status=document.getElementById('filter-status')?.value||'';
-  const mes=document.getElementById('filter-mes')?.value||'';
-  const desde=document.getElementById('filter-fecha-desde')?.value||'';
-  const hasta=document.getElementById('filter-fecha-hasta')?.value||'';
-  return facturas.filter(f=>{
-    if(search&&!([f.folio,f.cliente,f.rfcReceptor,f.oc,f.uuid,f.descripcion].some(v=>String(v||'').toLowerCase().includes(search)))) return false;
+  if(selM.children.length<=1){
+    [...new Set(facturas.map(f=>f.fecha?.substring(0,7)).filter(Boolean))].sort().reverse().forEach(m=>{
+      const o=document.createElement('option');o.value=m;o.textContent=m;selM.appendChild(o);
+    });
+  }
+
+  let data=facturas.filter(f=>{
+    if(search&&!((f.folio||'').toLowerCase().includes(search)||(f.cliente||'').toLowerCase().includes(search)||(f.oc||'').toLowerCase().includes(search))) return false;
     if(cliente&&f.rfcReceptor!==cliente) return false;
     if(mes&&!f.fecha?.startsWith(mes)) return false;
-    if(desde&&String(f.fecha||'')<desde) return false;
-    if(hasta&&String(f.fecha||'')>hasta) return false;
     if(status==='vencido'&&!isVencido(f)) return false;
-    if(status==='pagado'&&!(f.estatusPago==='pagado'||f.estatusPago==='complemento')) return false;
-    if(status&&status!=='vencido'&&status!=='pagado'&&f.estatusPago!==status) return false;
+    if(status&&status!=='vencido'&&f.estatusPago!==status) return false;
     return true;
-  }).sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))||String(b.folio||'').localeCompare(String(a.folio||'')));
-}
-function renderFacturasTable(){
-  ensureFacturaFilterOptions();
-  const data=getFilteredFacturas();
+  });
+
   const tbody=document.getElementById('facturas-table-body');
   if(!data.length){tbody.innerHTML='<tr><td colspan="9" class="empty">No hay facturas que coincidan</td></tr>';return;}
   tbody.innerHTML=data.map(f=>`<tr>
@@ -959,116 +801,11 @@ function renderFacturasTable(){
     <td title="${f.cliente} · ${f.rfcReceptor}"><strong>${f.cliente}</strong><div class="mini-cell mono">${f.rfcReceptor}</div></td>
     <td class="mono"><strong>${fmt(f.total)}</strong></td>
     <td class="mono" title="${f.oc||''}">${f.oc||'—'}</td>
-    <td>${statusBadge(f)}<div class="status-note">${paymentStatusNote(f)}</div></td>
+    <td>${statusBadge(f)}</td>
     <td class="mono">${f.fechaPago||'—'}</td>
     <td>${complementoBadge(f)}${f.fechaComplemento?`<div class="mini-cell mono">${f.fechaComplemento}</div>`:''}</td>
-    <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${f.id})" title="Ver factura y PDF">👁</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
+    <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="downloadInvoicePdf(${f.id})" title="Abrir/descargar PDF">PDF</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
   </tr>`).join('');
-}
-function clearFacturaFilters(){['search-input','filter-fecha-desde','filter-fecha-hasta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['filter-cliente','filter-status','filter-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderFacturasTable();}
-
-let currentReportData=[];
-function reportStatusLabel(f){if(isVencido(f))return 'Vencida';if(f.estatusPago==='complemento')return 'Pagada / complemento';if(f.estatusPago==='pagado')return 'Pagada';return 'Pendiente';}
-function reportDueDate(f){const d=dueDate(f);return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';}
-function populateReportClients(){
-  const el=document.getElementById('report-client');if(!el)return;
-  const old=el.value;
-  const rfcs=[...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))].sort((a,b)=>(CLIENTES_CATALOG[a]?.name||a).localeCompare(CLIENTES_CATALOG[b]?.name||b,'es'));
-  el.innerHTML='<option value="">Todos</option>'+rfcs.map(r=>`<option value="${r}">${CLIENTES_CATALOG[r]?.name||facturas.find(f=>f.rfcReceptor===r)?.cliente||r}</option>`).join('');
-  if(rfcs.includes(old))el.value=old;
-}
-function resetReportToScreenFilters(){
-  populateReportClients();
-  document.getElementById('report-client').value=document.getElementById('filter-cliente')?.value||'';
-  document.getElementById('report-status').value=document.getElementById('filter-status')?.value||'';
-  document.getElementById('report-from').value=document.getElementById('filter-fecha-desde')?.value||'';
-  document.getElementById('report-to').value=document.getElementById('filter-fecha-hasta')?.value||'';
-  document.getElementById('report-search').value=document.getElementById('search-input')?.value||'';
-  document.getElementById('report-rfc').value='';
-  renderReportPreview();
-}
-function openReportModal(){populateReportClients();resetReportToScreenFilters();document.getElementById('report-modal').classList.add('open');}
-function closeReportModal(){document.getElementById('report-modal').classList.remove('open');}
-function clearReportFilters(){['report-rfc','report-from','report-to','report-search'].forEach(id=>document.getElementById(id).value='');['report-client','report-status'].forEach(id=>document.getElementById(id).value='');renderReportPreview();}
-function setReportPreset(type){
-  clearReportFilters();
-  document.getElementById('report-status').value=type;
-  renderReportPreview();
-}
-function getReportFilteredFacturas(){
-  const cliente=document.getElementById('report-client')?.value||'';
-  const rfc=(document.getElementById('report-rfc')?.value||'').trim().toLowerCase();
-  const status=document.getElementById('report-status')?.value||'';
-  const desde=document.getElementById('report-from')?.value||'';
-  const hasta=document.getElementById('report-to')?.value||'';
-  const search=(document.getElementById('report-search')?.value||'').trim().toLowerCase();
-  return facturas.filter(f=>{
-    if(cliente&&f.rfcReceptor!==cliente)return false;
-    if(rfc&&!String(f.rfcReceptor||'').toLowerCase().includes(rfc))return false;
-    if(desde&&String(f.fecha||'')<desde)return false;
-    if(hasta&&String(f.fecha||'')>hasta)return false;
-    if(search&&!([f.folio,f.cliente,f.rfcReceptor,f.oc,f.uuid,f.descripcion].some(v=>String(v||'').toLowerCase().includes(search))))return false;
-    if(status==='vencido'&&!isVencido(f))return false;
-    if(status==='pagado'&&!(f.estatusPago==='pagado'||f.estatusPago==='complemento'))return false;
-    if(status==='complemento'&&f.estatusPago!=='complemento')return false;
-    if(status==='pendiente'&&f.estatusPago!=='pendiente')return false;
-    return true;
-  }).sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))||String(b.folio||'').localeCompare(String(a.folio||'')));
-}
-function getReportFilterDescription(){
-  const parts=[];
-  const c=document.getElementById('report-client');if(c?.value)parts.push('Cliente: '+c.options[c.selectedIndex].text);
-  const r=document.getElementById('report-rfc')?.value.trim();if(r)parts.push('RFC: '+r.toUpperCase());
-  const st=document.getElementById('report-status');if(st?.value)parts.push('Estatus: '+st.options[st.selectedIndex].text.replace(/^[^A-Za-zÁÉÍÓÚÑ]+/,''));
-  const d=document.getElementById('report-from')?.value;if(d)parts.push('Desde: '+d);
-  const h=document.getElementById('report-to')?.value;if(h)parts.push('Hasta: '+h);
-  const q=document.getElementById('report-search')?.value.trim();if(q)parts.push('Búsqueda: '+q);
-  return parts.length?parts.join(' · '):'Sin filtros: todas las facturas';
-}
-function renderReportPreview(){
-  currentReportData=getReportFilteredFacturas();
-  const total=currentReportData.reduce((s,f)=>s+(Number(f.total)||0),0);
-  const paidRows=currentReportData.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
-  const pendingRows=currentReportData.filter(f=>f.estatusPago==='pendiente');
-  const overdueRows=currentReportData.filter(isVencido);
-  document.getElementById('report-kpi-count').textContent=currentReportData.length;
-  document.getElementById('report-kpi-total').textContent=fmt(total);
-  document.getElementById('report-kpi-paid').textContent=fmt(paidRows.reduce((s,f)=>s+(Number(f.total)||0),0));
-  document.getElementById('report-kpi-pending').textContent=fmt(pendingRows.reduce((s,f)=>s+(Number(f.total)||0),0));
-  document.getElementById('report-kpi-overdue').textContent=fmt(overdueRows.reduce((s,f)=>s+(Number(f.total)||0),0));
-  document.getElementById('report-filter-summary').textContent=getReportFilterDescription()+` · ${currentReportData.length} factura(s)`;
-  const tb=document.getElementById('report-preview-body');
-  if(!currentReportData.length){tb.innerHTML='<tr><td colspan="10" class="empty">No hay facturas con estos filtros.</td></tr>';return;}
-  tb.innerHTML=currentReportData.map(f=>`<tr><td class="mono">${f.folio||''}</td><td class="mono">${f.fecha||''}</td><td>${f.cliente||''}</td><td class="mono">${f.rfcReceptor||''}</td><td class="mono"><strong>${fmt(Number(f.total)||0)}</strong></td><td>${reportStatusLabel(f)}</td><td class="mono">${f.fechaPago||'—'}</td><td class="mono">${reportDueDate(f)||'—'}</td><td class="mono">${isVencido(f)?daysOverdue(f):'—'}</td><td class="mono">${f.oc||'—'}</td></tr>`).join('');
-}
-function reportRowsForExport(data=currentReportData){return data.map(f=>[f.folio||'',f.fecha||'',f.cliente||'',f.rfcReceptor||'',Number(f.total)||0,reportStatusLabel(f),f.fechaPago||'',reportDueDate(f)||'',isVencido(f)?daysOverdue(f):0,f.oc||'',f.uuid||'',f.descripcion||'']);}
-function reportSummary(data=currentReportData){
-  const paid=data.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');const pending=data.filter(f=>f.estatusPago==='pendiente');const overdue=data.filter(isVencido);
-  return {count:data.length,total:data.reduce((s,f)=>s+(Number(f.total)||0),0),paid:paid.reduce((s,f)=>s+(Number(f.total)||0),0),pending:pending.reduce((s,f)=>s+(Number(f.total)||0),0),overdue:overdue.reduce((s,f)=>s+(Number(f.total)||0),0)};
-}
-function exportReportExcel(){
-  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para exportar','⚠️');return;}
-  const sum=reportSummary(data);const wb=XLSX.utils.book_new();
-  const resumen=XLSX.utils.aoa_to_sheet([['MARKETING TDI SA DE CV'],['Reporte de facturación y cobranza'],['Generado',new Date().toLocaleString('es-MX')],['Filtros',getReportFilterDescription()],[],['Facturas',sum.count],['Total facturado',sum.total],['Cobrado',sum.paid],['Pendiente',sum.pending],['Vencido',sum.overdue]]);
-  const det=XLSX.utils.aoa_to_sheet([['Folio','Fecha','Cliente','RFC','Total','Estatus','Fecha pago','Vencimiento','Días vencida','OC','UUID','Descripción'],...reportRowsForExport(data)]);
-  XLSX.utils.book_append_sheet(wb,resumen,'Resumen');XLSX.utils.book_append_sheet(wb,det,'Facturas');
-  XLSX.writeFile(wb,`Reporte_Facturacion_TDI_${new Date().toISOString().slice(0,10)}.xlsx`);toast('Reporte Excel generado');
-}
-function exportReportPdf(){
-  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para exportar','⚠️');return;}
-  if(!window.jspdf?.jsPDF){toast('No se pudo cargar el generador PDF. Revisa tu conexión.','⚠️');return;}
-  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});const sum=reportSummary(data);
-  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('MARKETING TDI SA DE CV',14,14);doc.setFontSize(11);doc.text('Reporte de facturación y cobranza',14,21);
-  doc.setFont('helvetica','normal');doc.setFontSize(8);const filterLines=doc.splitTextToSize(getReportFilterDescription(),265);doc.text(filterLines,14,28);
-  const y=28+(filterLines.length*4)+3;doc.setFontSize(8);doc.text(`Facturas: ${sum.count}   Total: ${fmt(sum.total)}   Cobrado: ${fmt(sum.paid)}   Pendiente: ${fmt(sum.pending)}   Vencido: ${fmt(sum.overdue)}`,14,y);
-  doc.autoTable({startY:y+5,head:[['Folio','Fecha','Cliente','RFC','Total','Estatus','F. pago','Vencimiento','Días','OC']],body:data.map(f=>[f.folio||'',f.fecha||'',f.cliente||'',f.rfcReceptor||'',fmt(Number(f.total)||0),reportStatusLabel(f),f.fechaPago||'—',reportDueDate(f)||'—',isVencido(f)?String(daysOverdue(f)):'—',f.oc||'—']),styles:{fontSize:6.6,cellPadding:1.7},headStyles:{fillColor:[91,79,207]},columnStyles:{2:{cellWidth:43},3:{cellWidth:28},4:{halign:'right'},5:{cellWidth:25},9:{cellWidth:24}},margin:{left:10,right:10}});
-  doc.save(`Reporte_Facturacion_TDI_${new Date().toISOString().slice(0,10)}.pdf`);toast('Reporte PDF generado');
-}
-function escHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function printReport(){
-  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para imprimir','⚠️');return;}const sum=reportSummary(data);const w=window.open('','_blank');if(!w){toast('El navegador bloqueó la ventana de impresión','⚠️');return;}
-  const rows=data.map(f=>`<tr><td>${escHtml(f.folio)}</td><td>${escHtml(f.fecha)}</td><td>${escHtml(f.cliente)}</td><td>${escHtml(f.rfcReceptor)}</td><td class="num">${escHtml(fmt(Number(f.total)||0))}</td><td>${escHtml(reportStatusLabel(f))}</td><td>${escHtml(f.fechaPago||'—')}</td><td>${escHtml(reportDueDate(f)||'—')}</td><td>${isVencido(f)?daysOverdue(f):'—'}</td><td>${escHtml(f.oc||'—')}</td></tr>`).join('');
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Reporte Facturación TDI</title><style>body{font-family:Arial,sans-serif;color:#1a1d23;margin:24px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:5px 0 14px}.meta{font-size:11px;color:#555;margin-bottom:12px}.kpis{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.k{border:1px solid #ddd;border-radius:7px;padding:8px 10px;min-width:145px}.k b{display:block;font-size:12px;margin-top:3px}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #ddd;padding:5px;text-align:left}th{background:#f1f3f7}.num{text-align:right;white-space:nowrap}@page{size:landscape;margin:10mm}</style></head><body><h1>MARKETING TDI SA DE CV</h1><h2>Reporte de facturación y cobranza</h2><div class="meta">${escHtml(getReportFilterDescription())}<br>Generado: ${escHtml(new Date().toLocaleString('es-MX'))}</div><div class="kpis"><div class="k">Facturas<b>${sum.count}</b></div><div class="k">Total facturado<b>${escHtml(fmt(sum.total))}</b></div><div class="k">Cobrado<b>${escHtml(fmt(sum.paid))}</b></div><div class="k">Pendiente<b>${escHtml(fmt(sum.pending))}</b></div><div class="k">Vencido<b>${escHtml(fmt(sum.overdue))}</b></div></div><table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>RFC</th><th>Total</th><th>Estatus</th><th>F. pago</th><th>Vencimiento</th><th>Días vencida</th><th>OC</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>{window.print()}<\/script></body></html>`);w.document.close();
 }
 
 function openModal(id){
@@ -1104,10 +841,7 @@ function saveStatus(){
 
 function renderClientes(){
   const grid=document.getElementById('clients-grid');
-  const q=(document.getElementById('client-search')?.value||'').trim().toLowerCase();
-  const st=document.getElementById('client-status-filter')?.value||'';
-  const entries=Object.entries(CLIENTES_CATALOG).filter(([rfc,c])=>{if(q&&!((c.name||'').toLowerCase().includes(q)||rfc.toLowerCase().includes(q)))return false;if(st==='active'&&c.active===false)return false;if(st==='inactive'&&c.active!==false)return false;return true;});
-  grid.innerHTML=entries.map(([rfc,c])=>{
+  grid.innerHTML=Object.entries(CLIENTES_CATALOG).map(([rfc,c])=>{
     const fs=facturas.filter(f=>f.rfcReceptor===rfc);
     const total=fs.reduce((s,f)=>s+f.total,0);
     return `<div class="client-card ${c.active===false?'inactive':''}">
@@ -1115,7 +849,7 @@ function renderClientes(){
       <div style="margin-bottom:.75rem">${c.active===false?'<span class="badge badge-gray">Inactivo</span> ':''}${c.requiresOC?'<span class="badge badge-purple">Requiere OC</span>':'<span class="badge badge-gray">Solo factura</span>'}<span class="badge badge-gray" style="margin-left:.25rem">Pago ${c.cond} días</span></div>
       <div class="client-stats"><div class="client-stat"><div class="client-stat-val">${fs.length}</div><div class="client-stat-lbl">Facturas</div></div><div class="client-stat"><div class="client-stat-val" style="font-size:.85rem">${fmt(total)}</div><div class="client-stat-lbl">Total</div></div></div>
     </div>`;
-  }).join('') || '<div class="empty">No hay clientes que coincidan.</div>';
+  }).join('');
 }
 let editingClientRfc=null;
 function openClientModal(rfc=null){
@@ -1140,72 +874,13 @@ function deleteClient(rfc){const n=facturas.filter(f=>f.rfcReceptor===rfc).lengt
 let invoiceEditId=null;
 async function openInvoiceEdit(id){const f=facturas.find(x=>x.id===id);if(!f)return;invoiceEditId=id;['folio','fecha','rfc','cliente','descripcion','subtotal','iva','total','oc'].forEach(k=>{const map={rfc:'rfcReceptor'};document.getElementById('edit-'+k).value=f[map[k]||k]??'';});const input=document.getElementById('edit-pdf');input.value='';const existing=await getPdfBlob(id);document.getElementById('edit-pdf-status').textContent=existing?'PDF almacenado. Puedes reemplazarlo seleccionando otro archivo.':'No hay PDF almacenado. Selecciona el PDF original para asociarlo a esta factura.';document.getElementById('invoice-edit-modal').classList.add('open');}
 function closeInvoiceEdit(){document.getElementById('invoice-edit-modal').classList.remove('open');invoiceEditId=null;}
-async function saveInvoiceEdit(){const f=facturas.find(x=>x.id===invoiceEditId);if(!f)return;const pdf=document.getElementById('edit-pdf').files[0];if(pdf&&pdf.type&&pdf.type!=='application/pdf'){toast('Selecciona un archivo PDF válido','⚠️');return;}f.folio=document.getElementById('edit-folio').value.trim();f.fecha=document.getElementById('edit-fecha').value;f.rfcReceptor=document.getElementById('edit-rfc').value.trim().toUpperCase();f.cliente=document.getElementById('edit-cliente').value.trim();f.descripcion=document.getElementById('edit-descripcion').value.trim();f.subtotal=parseFloat(document.getElementById('edit-subtotal').value)||0;f.iva=parseFloat(document.getElementById('edit-iva').value)||0;f.total=parseFloat(document.getElementById('edit-total').value)||0;f.oc=document.getElementById('edit-oc').value.trim();if(pdf){await storePdfBlob(f.id,pdf);f.pdfFileName=pdf.name;f.hasPdf=true;}save();closeInvoiceEdit();renderFacturasTable();renderDashboard();toast(pdf?'Factura y PDF actualizados':'Factura actualizada');}
+async function saveInvoiceEdit(){const f=facturas.find(x=>x.id===invoiceEditId);if(!f)return;const pdf=document.getElementById('edit-pdf').files[0];if(pdf&&pdf.type&&pdf.type!=='application/pdf'){toast('Selecciona un archivo PDF válido','⚠️');return;}f.folio=document.getElementById('edit-folio').value.trim();f.fecha=document.getElementById('edit-fecha').value;f.rfcReceptor=document.getElementById('edit-rfc').value.trim().toUpperCase();f.cliente=document.getElementById('edit-cliente').value.trim();f.descripcion=document.getElementById('edit-descripcion').value.trim();f.subtotal=parseFloat(document.getElementById('edit-subtotal').value)||0;f.iva=parseFloat(document.getElementById('edit-iva').value)||0;f.total=parseFloat(document.getElementById('edit-total').value)||0;f.oc=document.getElementById('edit-oc').value.trim();if(pdf)await storePdfBlob(f.id,pdf);save();closeInvoiceEdit();renderFacturasTable();renderDashboard();toast(pdf?'Factura y PDF actualizados':'Factura actualizada');}
 async function deleteInvoice(id){const f=facturas.find(x=>x.id===id);if(!f||!confirm(`¿Eliminar la factura ${f.folio} de ${f.cliente}? Esta acción no se puede deshacer.`))return;facturas=facturas.filter(x=>x.id!==id);save();await deletePdfBlob(id);renderFacturasTable();renderDashboard();renderClientes();renderBillingNotices();toast('Factura eliminada');}
-function pdfDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open('tdi_archivos',1);req.onupgradeneeded=()=>req.result.createObjectStore('pdfs');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+function pdfDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open('tdi_archivos',2);req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains('pdfs'))db.createObjectStore('pdfs');if(!db.objectStoreNames.contains('statements'))db.createObjectStore('statements');};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
 async function storePdfBlob(id,file){const db=await pdfDb();return new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put(file,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
 async function getPdfBlob(id){const db=await pdfDb();return new Promise((res,rej)=>{const r=db.transaction('pdfs').objectStore('pdfs').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 async function deletePdfBlob(id){try{const db=await pdfDb();const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').delete(id);}catch(e){}}
 async function downloadInvoicePdf(id){const f=facturas.find(x=>x.id===id);const blob=await getPdfBlob(id);if(!blob){toast('Esta factura no tiene PDF almacenado. Los PDFs subidos antes de esta actualización deben volver a cargarse.','⚠️');return;}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Factura_${f?.folio||id}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
-
-async function openInvoiceViewer(id){
-  const f=facturas.find(x=>x.id===id);if(!f)return;viewingInvoiceId=id;
-  if(invoiceObjectUrl){URL.revokeObjectURL(invoiceObjectUrl);invoiceObjectUrl=null;}
-  document.getElementById('invoice-view-title').textContent=`Factura ${f.folio||'—'}`;
-  document.getElementById('invoice-view-sub').textContent=`${f.cliente||''} · ${f.rfcReceptor||''}`;
-  const due=dueDate(f);const dueTxt=due?`${due.getFullYear()}-${String(due.getMonth()+1).padStart(2,'0')}-${String(due.getDate()).padStart(2,'0')}`:'—';
-  const rows=[['Fecha de emisión',f.fecha||'—'],['Cliente',f.cliente||'—'],['RFC receptor',f.rfcReceptor||'—'],['UUID',f.uuid||'—'],['Descripción',f.descripcion||'—'],['Subtotal',fmt(Number(f.subtotal)||0)],['IVA',fmt(Number(f.iva)||0)],['Total',fmt(Number(f.total)||0)],['Orden de compra',f.oc||'—'],['Archivo PDF',f.pdfFileName||'—'],['Estatus',isVencido(f)?'Vencida':(f.estatusPago==='complemento'?'Pagada / complemento':(f.estatusPago||'pendiente'))],['Vencimiento',dueTxt],['Situación',paymentStatusNote(f)||'—'],['Fecha de pago',f.fechaPago||'—'],['Monto recibido',f.montoPago?fmt(Number(f.montoPago)):'—'],['Estado de cuenta',f.bancoArchivo||'—'],['Referencia bancaria',f.bancoReferencia||'—']];
-  document.getElementById('invoice-view-meta').innerHTML=rows.map(([l,v])=>`<div class="invoice-meta-row"><div class="invoice-meta-label">${l}</div><div class="invoice-meta-value">${v}</div></div>`).join('');
-  const pane=document.getElementById('invoice-pdf-pane');pane.innerHTML='<div class="invoice-pdf-empty">Cargando PDF…</div>';
-  document.getElementById('invoice-view-modal').classList.add('open');
-  try{const blob=await getPdfBlob(id);if(blob){invoiceObjectUrl=URL.createObjectURL(blob);pane.innerHTML=`<iframe src="${invoiceObjectUrl}#toolbar=1&navpanes=0" title="Factura ${f.folio}"></iframe>`;}else{pane.innerHTML='<div class="invoice-pdf-empty"><div style="font-size:2rem">📄</div><strong>No hay PDF almacenado para esta factura.</strong><span>Los registros anteriores a la función de archivo pueden no tener el PDF guardado. Usa “Editar” para adjuntarlo.</span></div>';}}catch(e){pane.innerHTML='<div class="invoice-pdf-empty">No fue posible abrir el PDF almacenado.</div>';}
-}
-function closeInvoiceViewer(){const m=document.getElementById('invoice-view-modal');if(m)m.classList.remove('open');if(invoiceObjectUrl){URL.revokeObjectURL(invoiceObjectUrl);invoiceObjectUrl=null;}viewingInvoiceId=null;}
-function downloadViewedPdf(){if(viewingInvoiceId)downloadInvoicePdf(viewingInvoiceId);}
-function editViewedInvoice(){const id=viewingInvoiceId;closeInvoiceViewer();if(id)openInvoiceEdit(id);}
-function statusViewedInvoice(){const id=viewingInvoiceId;closeInvoiceViewer();if(id)openModal(id);}
-
-// Carga masiva de clientes
-function openClientImportPicker(){const input=document.getElementById('client-import-input');input.value='';input.click();}
-function handleClientImportDrop(ev){ev.preventDefault();document.getElementById('drop-clientes-bulk')?.classList.remove('drag');const f=[...ev.dataTransfer.files].find(x=>/\.(xlsx|xls|csv)$/i.test(x.name));if(!f){toast('Selecciona un Excel o CSV válido','⚠️');return;}prepareClientImport(f);}
-function handleClientImportFile(input){const f=input.files?.[0];if(f)prepareClientImport(f);}
-function headerKey(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();}
-function boolValue(v,def=false){const x=headerKey(v);if(['SI','S','YES','Y','1','TRUE','ACTIVO'].includes(x))return true;if(['NO','N','0','FALSE','INACTIVO'].includes(x))return false;return def;}
-function valueByHeaders(row,headers,names){for(const n of names){const idx=headers.findIndex(h=>h===n||h.includes(n));if(idx>=0&&String(row[idx]??'').trim()!=='')return row[idx];}return '';}
-async function prepareClientImport(file){
-  try{
-    const ab=await file.arrayBuffer();const wb=XLSX.read(ab,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-    if(rows.length<2){toast('El archivo no contiene filas para importar','⚠️');return;}
-    const headers=rows[0].map(headerKey);pendingClientImport=[];pendingClientImportInvalid=[];
-    rows.slice(1).forEach((row,i)=>{
-      const rfc=String(valueByHeaders(row,headers,['RFC','RFC RECEPTOR'])).trim().toUpperCase();
-      const name=String(valueByHeaders(row,headers,['CLIENTE','RAZON SOCIAL','NOMBRE'])).trim();
-      if(!rfc&&!name)return;if(!rfc||!name){pendingClientImportInvalid.push({row:i+2,rfc,name});return;}
-      const regimen=String(valueByHeaders(row,headers,['REGIMEN FISCAL','REGIMEN'])).trim();
-      const condRaw=valueByHeaders(row,headers,['DIAS PAGO','DIAS DE PAGO','CONDICION PAGO']);
-      const diaRaw=valueByHeaders(row,headers,['DIA FACTURACION','DIA DE FACTURACION']);
-      const ocRaw=valueByHeaders(row,headers,['REQUIERE OC','OC']);
-      const activeRaw=valueByHeaders(row,headers,['ESTATUS','ACTIVO']);
-      pendingClientImport.push({rfc,name,regimen,cond:condRaw===''?null:Math.max(0,parseInt(condRaw)||0),dia:diaRaw===''?null:Math.min(28,Math.max(1,parseInt(diaRaw)||1)),requiresOC:ocRaw===''?null:boolValue(ocRaw,false),active:activeRaw===''?null:boolValue(activeRaw,true)});
-    });
-    const existing=pendingClientImport.filter(x=>!!CLIENTES_CATALOG[x.rfc]).length;const news=pendingClientImport.length-existing;
-    document.getElementById('client-import-file-name').textContent=file.name;
-    document.getElementById('client-import-summary').innerHTML=`<div class="import-summary-card">Válidos<strong>${pendingClientImport.length}</strong></div><div class="import-summary-card">Nuevos<strong>${news}</strong></div><div class="import-summary-card">Actualizar<strong>${existing}</strong></div>`;
-    document.getElementById('client-import-preview').innerHTML=pendingClientImport.slice(0,30).map(x=>`<tr><td class="mono">${x.rfc}</td><td>${x.name}</td><td>${x.regimen||'—'}</td><td>${x.cond??'—'}</td><td>${x.requiresOC===null?'—':x.requiresOC?'Sí':'No'}</td></tr>`).join('')+(pendingClientImportInvalid.length?`<tr><td colspan="5" style="color:var(--red)">${pendingClientImportInvalid.length} fila(s) omitidas por faltar RFC o cliente.</td></tr>`:'');
-    document.getElementById('client-import-commit').disabled=!pendingClientImport.length;
-    document.getElementById('client-import-modal').classList.add('open');
-  }catch(e){console.error(e);toast('No pude leer el archivo de clientes','❌');}
-}
-function closeClientImportModal(){const m=document.getElementById('client-import-modal');if(m)m.classList.remove('open');pendingClientImport=[];pendingClientImportInvalid=[];}
-function commitClientImport(){
-  if(!pendingClientImport.length)return;let created=0,updated=0;
-  pendingClientImport.forEach(x=>{const old=CLIENTES_CATALOG[x.rfc];if(old)updated++;else created++;CLIENTES_CATALOG[x.rfc]={...old,name:x.name,regimen:x.regimen||old?.regimen||'',cond:x.cond===null?(old?.cond??30):x.cond,requiresOC:x.requiresOC===null?(old?.requiresOC??false):x.requiresOC,active:x.active===null?(old?.active!==false):x.active};alertConfig[x.rfc]={...(alertConfig[x.rfc]||{}),active:alertConfig[x.rfc]?.active||false,dia:x.dia===null?(alertConfig[x.rfc]?.dia||1):x.dia};});
-  saveClientes();localStorage.setItem('tdi_alertas',JSON.stringify(alertConfig));closeClientImportModal();renderClientes();renderAlertas();renderDashboard();toast(`${created} cliente(s) creado(s) · ${updated} actualizado(s)`);
-}
-function downloadClientTemplate(){
-  const rows=[['RFC','Cliente / Razón Social','Régimen Fiscal','Días Pago','Requiere OC','Día Facturación','Estatus'],['ABC010203XX1','CLIENTE EJEMPLO','601',30,'No',1,'Activo']];
-  const ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[{wch:16},{wch:30},{wch:16},{wch:12},{wch:14},{wch:18},{wch:12}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Clientes');XLSX.writeFile(wb,'Plantilla_Clientes_TDI.xlsx');
-}
 
 // PDF upload para nuevas facturas
 async function extractText(file){
@@ -1277,39 +952,17 @@ function handleDrop(ev,type){
   const files=[...ev.dataTransfer.files];
   if(!files.length) return;
   if(type==='complemento') return processComplementoBatch(files);
-  if(type==='factura'&&files.length>1) return processFacturaBatch(files.filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf'));
   processFile(files[0],type);
 }
 async function handleFile(input,type){
   const files=[...input.files];
   if(!files.length) return;
-  if(type==='complemento'){await processComplementoBatch(files);input.value='';return;}
-  if(type==='factura'&&files.length>1){await processFacturaBatch(files);return;}
+  if(type==='complemento'){
+    await processComplementoBatch(files);
+    input.value='';
+    return;
+  }
   await processFile(files[0],type);
-}
-async function processFacturaBatch(files){
-  const pdfs=files.filter(f=>/\.pdf$/i.test(f.name)||f.type==='application/pdf'||!f.type);if(!pdfs.length)return;
-  pendingFacturaBatch=[];pendingFactura=null;pendingFacturaFile=null;pendingOC=null;
-  document.getElementById('preview-factura').style.display='block';document.getElementById('preview-factura-grid').innerHTML='<div class="preview-field"><div class="preview-label">Procesando</div><div class="preview-value">'+pdfs.length+' facturas…</div></div>';
-  for(const file of pdfs){try{const text=await extractText(file);const fac=parseFactura(text);pendingFacturaBatch.push({factura:fac,file,error:''});}catch(e){pendingFacturaBatch.push({factura:null,file,error:e.message||'Error de lectura'});}}
-  showPreviewFacturaBatch();
-}
-function invoiceKey(f){return f?.uuid?'U:'+String(f.uuid).toUpperCase():'F:'+String(f?.folio||'')+'|'+String(f?.rfcReceptor||'');}
-function invoiceDuplicate(f){return facturas.find(x=>(f.uuid&&x.uuid&&String(x.uuid).toUpperCase()===String(f.uuid).toUpperCase())||(f.folio&&f.rfcReceptor&&String(x.folio)===String(f.folio)&&x.rfcReceptor===f.rfcReceptor));}
-function batchDuplicateKeys(){const counts={};pendingFacturaBatch.filter(x=>x.factura).forEach(x=>{const k=invoiceKey(x.factura);counts[k]=(counts[k]||0)+1;});return new Set(Object.entries(counts).filter(([,n])=>n>1).map(([k])=>k));}
-function getBatchSavePlan(){
-  const seen=new Set();
-  return pendingFacturaBatch.map(x=>{
-    if(!x.factura)return {...x,state:'error'};
-    if(invoiceDuplicate(x.factura))return {...x,state:'duplicate'};
-    const k=invoiceKey(x.factura);if(seen.has(k))return {...x,state:'duplicate'};seen.add(k);
-    return {...x,state:'save'};
-  });
-}
-function showPreviewFacturaBatch(){
-  const plan=getBatchSavePlan();const valid=plan.filter(x=>x.factura);const saveable=plan.filter(x=>x.state==='save');const dups=plan.filter(x=>x.state==='duplicate');const errors=plan.filter(x=>x.state==='error');
-  document.getElementById('preview-factura-grid').innerHTML=[['Archivos',pendingFacturaBatch.length],['Leídos correctamente',valid.length],['Nuevas para guardar',saveable.length],['Duplicados detectados',dups.length],['Errores',errors.length]].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('')+`<div class="full" style="grid-column:1/-1"><div class="batch-list"><div class="batch-row batch-row-head"><span>Folio</span><span>Cliente</span><span>Fecha</span><span>Total</span></div>${plan.slice(0,30).map(x=>x.factura?`<div class="batch-row"><span class="mono">${x.factura.folio||'—'}</span><span>${x.factura.cliente||x.factura.rfcReceptor||'—'}${x.state==='duplicate'?' · <strong style="color:var(--yellow)">Duplicada</strong>':''}</span><span class="mono">${x.factura.fecha||'—'}</span><span class="mono">${fmt(x.factura.total)}</span></div>`:`<div class="batch-row"><span>—</span><span style="color:var(--red)">${x.file.name}: error</span><span>—</span><span>—</span></div>`).join('')}</div></div>`;
-  document.getElementById('save-section').style.display='block';document.getElementById('save-factura-btn').textContent=`💾 Guardar ${saveable.length} factura(s) nueva(s)`;
 }
 async function processFile(file,type){
   try{
@@ -1321,7 +974,7 @@ async function processFile(file,type){
     }
     const text=await extractText(file);
     if(type==='factura'){
-      pendingFacturaBatch=[];pendingFactura=parseFactura(text);
+      pendingFactura=parseFactura(text);
       pendingFacturaFile=file;
       showPreviewFactura();
     }else{
@@ -1459,9 +1112,7 @@ function showPreviewFactura(){
   ].map(([l,v])=>`<div class="preview-field"><div class="preview-label">${l}</div><div class="preview-value">${v}</div></div>`).join('');
   document.getElementById('preview-factura').style.display='block';
   document.getElementById('save-section').style.display='block';
-  document.getElementById('save-factura-btn').textContent='💾 Guardar Factura';
 }
-
 function showPreviewOC(){
   const o=pendingOC;
   document.getElementById('preview-oc-grid').innerHTML=[
@@ -1477,35 +1128,33 @@ function showPreviewOC(){
   }
 }
 async function saveFactura(){
-  if(pendingFacturaBatch.length){
-    const valid=getBatchSavePlan().filter(x=>x.state==='save');if(!valid.length){toast('No hay facturas nuevas para guardar','⚠️');return;}
-    let saved=0;for(let i=0;i<valid.length;i++){const {factura:f,file}=valid[i];f.id=Date.now()+i;f.createdAt=f.createdAt||new Date().toISOString();f.pdfFileName=file?.name||'';facturas.unshift(f);try{await storePdfBlob(f.id,file);f.hasPdf=true;}catch(e){console.warn(e);}saved++;}
-    save();toast(saved+' factura(s) guardada(s)');resetNueva();renderDashboard();renderFacturasTable();return;
-  }
-  if(!pendingFactura)return;
-  const dup=invoiceDuplicate(pendingFactura);if(dup){toast(`La factura ${pendingFactura.folio||''} ya está registrada (folio ${dup.folio})`,'⚠️');return;}
+  if(!pendingFactura) return;
   if(pendingOC){pendingFactura.oc=pendingOC.oc;pendingFactura.totalOC=pendingOC.total;}
-  pendingFactura.id=Date.now();pendingFactura.pdfFileName=pendingFacturaFile?.name||'';facturas.unshift(pendingFactura);
+  pendingFactura.id=Date.now();
+  facturas.unshift(pendingFactura);
   if(pendingFacturaFile){try{await storePdfBlob(pendingFactura.id,pendingFacturaFile);pendingFactura.hasPdf=true;}catch(e){console.warn(e);}}
-  save();toast('Factura '+pendingFactura.folio+' guardada');resetNueva();renderDashboard();renderFacturasTable();
+  save();toast('Factura '+pendingFactura.folio+' guardada');
+  resetNueva();renderDashboard();
 }
 function resetNueva(){
-  pendingFactura=null;pendingOC=null;pendingComplemento=null;pendingFacturaFile=null;pendingFacturaBatch=[];
-  document.getElementById('preview-factura').style.display='none';document.getElementById('preview-oc').style.display='none';document.getElementById('preview-complemento').style.display='none';document.getElementById('save-section').style.display='none';
-  document.getElementById('save-factura-btn').textContent='💾 Guardar Factura';
-  document.getElementById('input-factura').value='';document.getElementById('input-oc').value='';document.getElementById('input-complemento').value='';
+  pendingFactura=null;pendingOC=null;pendingComplemento=null;pendingFacturaFile=null;
+  document.getElementById('preview-factura').style.display='none';
+  document.getElementById('preview-oc').style.display='none';
+  document.getElementById('preview-complemento').style.display='none';
+  document.getElementById('save-section').style.display='none';
+  document.getElementById('input-factura').value='';
+  document.getElementById('input-oc').value='';
+  document.getElementById('input-complemento').value='';
 }
 
 function exportExcel(){
-  const data=getFilteredFacturas();
-  if(!data.length){toast('No hay facturas filtradas para exportar','⚠️');return;}
   const rows=[['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento','UUID Complemento']];
-  data.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',reportStatusLabel(f),f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'',f.complementoUuid||'']));
+  facturas.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'',f.complementoUuid||'']));
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Facturas');
-  XLSX.writeFile(wb,`Control_Facturacion_TDI_filtrado_${new Date().toISOString().slice(0,10)}.xlsx`);
-  toast(`${data.length} factura(s) exportadas a Excel`);
+  XLSX.writeFile(wb,'Control_Facturacion_TDI.xlsx');
+  toast('Excel exportado');
 }
 
 renderDashboard();
@@ -1577,6 +1226,22 @@ function getBillingAlerts(daysAhead=0){const hoy=new Date();hoy.setHours(0,0,0,0
 function renderBillingNotices(){const box=document.getElementById('billing-notice');if(!box)return;const due=getBillingAlerts(3);if(!due.length){box.classList.remove('show');box.innerHTML='';return;}box.classList.add('show');box.innerHTML=`<div class="billing-notice-title">🔔 ${due.some(x=>x.diff===0)?'Facturación pendiente hoy':'Próximas facturas por emitir'}</div>${due.map(x=>`<div class="billing-notice-row"><span><strong>${x.cliente}</strong> · ${x.diff===0?'Hoy':x.diff===1?'Mañana':'En '+x.diff+' días'}</span><button class="btn btn-primary btn-sm" onclick="goNewInvoice()">Crear factura</button></div>`).join('')}`;}
 function goNewInvoice(){const nav=[...document.querySelectorAll('.nav-item')].find(n=>n.textContent.includes('Nueva Factura'));showView('nueva',nav);}
 
+
+// Biblioteca persistente de estados de cuenta
+let statementMeta=JSON.parse(localStorage.getItem('tdi_estados_cuenta')||'[]'), replacingStatementId=null;
+function saveStatementMeta(){localStorage.setItem('tdi_estados_cuenta',JSON.stringify(statementMeta));}
+async function storeStatementBlob(id,file){const db=await pdfDb();return new Promise((res,rej)=>{const tx=db.transaction('statements','readwrite');tx.objectStore('statements').put(file,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+async function getStatementBlob(id){const db=await pdfDb();return new Promise((res,rej)=>{const r=db.transaction('statements').objectStore('statements').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function deleteStatementBlob(id){const db=await pdfDb();return new Promise((res,rej)=>{const tx=db.transaction('statements','readwrite');tx.objectStore('statements').delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+function extractStatementPeriod(text,fileName){let m=text.match(/Periodo\s+DEL\s+(\d{2})\/(\d{2})\/(\d{4})\s+AL\s+(\d{2})\/(\d{2})\/(\d{4})/i);if(m)return `${m[1]}/${m[2]}/${m[3]} – ${m[4]}/${m[5]}/${m[6]}`;m=String(fileName||'').match(/_(20\d{2})(\d{2})/);if(m)return `${m[2]}/${m[1]}`;return 'Sin identificar';}
+async function saveStatementToLibrary(file,text){const period=extractStatementPeriod(text,file.name);let existing=statementMeta.find(x=>x.name===file.name&&x.period===period);const id=existing?.id||('st_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));await storeStatementBlob(id,file);if(existing){existing.uploadedAt=new Date().toISOString();existing.size=file.size;}else statementMeta.unshift({id,bank:'BBVA México',period,name:file.name,uploadedAt:new Date().toISOString(),size:file.size});saveStatementMeta();}
+function renderStatementLibrary(){const body=document.getElementById('statement-library-body');if(!body)return;if(!statementMeta.length){body.innerHTML='<tr><td colspan="5" style="padding:1.2rem;text-align:center;color:var(--muted)">Aún no hay estados de cuenta guardados. Los próximos PDFs que subas en Conciliación quedarán aquí.</td></tr>';return;}body.innerHTML=statementMeta.map(x=>`<tr style="border-top:1px solid var(--border)"><td style="padding:.75rem">${x.bank||'BBVA México'}</td><td style="padding:.75rem;font-weight:600">${x.period||'—'}</td><td style="padding:.75rem">${x.name}</td><td style="padding:.75rem">${new Date(x.uploadedAt).toLocaleDateString('es-MX')}</td><td style="padding:.75rem"><div class="action-group"><button class="btn btn-outline btn-sm" onclick="viewStatement('${x.id}')">Ver PDF</button><button class="btn btn-outline btn-sm" onclick="downloadStatement('${x.id}')">Descargar</button><button class="btn btn-outline btn-sm" onclick="chooseReplaceStatement('${x.id}')">Reemplazar</button><button class="btn btn-danger btn-sm" onclick="deleteStatement('${x.id}')">Eliminar</button></div></td></tr>`).join('');}
+async function viewStatement(id){const b=await getStatementBlob(id);if(!b){toast('No se encontró el PDF almacenado','⚠️');return;}const u=URL.createObjectURL(b);window.open(u,'_blank');setTimeout(()=>URL.revokeObjectURL(u),60000);}
+async function downloadStatement(id){const x=statementMeta.find(s=>s.id===id),b=await getStatementBlob(id);if(!b){toast('No se encontró el PDF almacenado','⚠️');return;}const u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=x?.name||'estado_cuenta.pdf';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000);}
+function chooseReplaceStatement(id){replacingStatementId=id;const i=document.getElementById('statement-replace-input');i.value='';i.click();}
+async function replaceStatementFile(input){const f=input.files[0],x=statementMeta.find(s=>s.id===replacingStatementId);if(!f||!x)return;if(f.type&&f.type!=='application/pdf'){toast('Selecciona un PDF válido','⚠️');return;}const text=await extractText(f);await storeStatementBlob(x.id,f);x.name=f.name;x.period=extractStatementPeriod(text,f.name);x.uploadedAt=new Date().toISOString();x.size=f.size;saveStatementMeta();renderStatementLibrary();toast('Estado de cuenta reemplazado');replacingStatementId=null;}
+async function deleteStatement(id){const x=statementMeta.find(s=>s.id===id);if(!x||!confirm(`¿Eliminar el estado de cuenta ${x.period}?`))return;await deleteStatementBlob(id);statementMeta=statementMeta.filter(s=>s.id!==id);saveStatementMeta();renderStatementLibrary();toast('Estado de cuenta eliminado');}
+
 // ── CONCILIACIÓN ──────────────────────────────────────────────────────────────
 function handleConcDrop(ev){
   ev.preventDefault();
@@ -1604,6 +1269,7 @@ async function processBancoPDFs(files){
     let allMovimientos=[];
     for(const file of files){
       const text=await extractText(file);
+      await saveStatementToLibrary(file,text);
       const year=extractStatementYear(text,file.name);
       const movs=parseBBVA(text,year);
       movs.forEach(m=>m.archivo=file.name);
@@ -1617,6 +1283,7 @@ async function processBancoPDFs(files){
       return true;
     });
     renderConciliacion(allMovimientos, files.length);
+    renderStatementLibrary();
   }catch(e){
     console.error(e);
     document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error: '+e.message+'</div>';
@@ -1700,48 +1367,6 @@ function autoAplicarConciliacion(exactos){
   });
   return count;
 }
-let concSinMatchActual=[];
-function concClientNames(){
-  return [...new Set(Object.values(CLIENTES_CATALOG).filter(c=>c&&c.active!==false&&c.name).map(c=>c.name))].sort((a,b)=>a.localeCompare(b,'es'));
-}
-function concClientTokens(name){
-  const stop=new Set(['LA','EL','LOS','LAS','DE','DEL','Y','SA','CV','SAPI','SERVICIOS','GRUPO']);
-  return normTxt(name).split(' ').filter(t=>t.length>=4&&!stop.has(t));
-}
-function movMatchesConcClient(mov,clientName){
-  if(!clientName) return true;
-  const txt=normTxt(mov.desc);
-  const full=normTxt(clientName);
-  if(full&&txt.includes(full)) return true;
-  const tokens=concClientTokens(clientName);
-  if(!tokens.length) return false;
-  return tokens.every(t=>{
-    const stem=t.substring(0,Math.min(6,t.length));
-    return txt.includes(t)||txt.includes(stem);
-  });
-}
-function movDateISO(fecha){
-  const p=String(fecha||'').split('/');
-  return p.length===3?`${p[2]}-${p[1]}-${p[0]}`:'';
-}
-function renderConcSinMatchFiltrado(){
-  const rows=document.getElementById('conc-unmatched-rows');
-  const meta=document.getElementById('conc-unmatched-meta');
-  if(!rows) return;
-  const cliente=document.getElementById('conc-filter-client')?.value||'';
-  const desde=document.getElementById('conc-filter-from')?.value||'';
-  const hasta=document.getElementById('conc-filter-to')?.value||'';
-  const filtrados=concSinMatchActual.filter(m=>{const d=movDateISO(m.fecha);return movMatchesConcClient(m,cliente)&&(!desde||d>=desde)&&(!hasta||d<=hasta);});
-  if(meta) meta.textContent=`Mostrando ${filtrados.length} de ${concSinMatchActual.length} abono${concSinMatchActual.length===1?'':'s'} sin match`;
-  rows.innerHTML=filtrados.length?filtrados.map(m=>`<div class="conc-row"><div class="conc-row-info"><span><strong>${fmt(m.monto)}</strong></span><span class="conc-row-fecha">${m.fecha} · ${m.desc}${m.archivo?' · '+m.archivo:''}</span></div></div>`).join(''):`<div class="conc-filter-empty">No hay abonos que coincidan con estos filtros.</div>`;
-}
-function clearConcSinMatchFilters(){
-  const c=document.getElementById('conc-filter-client');
-  const d=document.getElementById('conc-filter-from');const h=document.getElementById('conc-filter-to');
-  if(c) c.value='';
-  if(d) d.value='';if(h)h.value='';
-  renderConcSinMatchFiltrado();
-}
 function renderConciliacion(movimientos, numArchivos){
   numArchivos=numArchivos||1;
   const exactos=[],sinMatchMov=[];
@@ -1769,32 +1394,20 @@ function renderConciliacion(movimientos, numArchivos){
     html+=`<div class="conc-section conc-ok"><div class="conc-section-title">✅ Coincidencias aplicadas automáticamente</div>`;
     exactos.forEach(({mov,factura})=>{
       html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${factura.folio}</strong> · ${factura.cliente}</span><span class="conc-row-fecha">${mov.fecha} · ${mov.desc}${mov.archivo?' · '+mov.archivo:''}</span></div>
-      <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><span class="conc-row-monto">${fmt(mov.monto)}</span><span class="conc-applied">✅ Pagada</span><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${factura.id})">👁 Ver</button></div></div>`;
+      <div style="display:flex;align-items:center;gap:.75rem"><span class="conc-row-monto">${fmt(mov.monto)}</span><span class="conc-applied">✅ Pagada</span></div></div>`;
     });
     html+='</div>';
   }
   if(sinMatchMov.length){
-    concSinMatchActual=[...sinMatchMov];
-    const clientOptions=concClientNames().map(n=>`<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
-    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Abonos leídos sin factura exacta pendiente</div>
-      <div class="conc-filter-bar">
-        <div class="conc-filter-field"><label class="conc-filter-label" for="conc-filter-client">Cliente</label><select id="conc-filter-client" class="form-input" onchange="renderConcSinMatchFiltrado()"><option value="">Todos los clientes</option>${clientOptions}</select></div>
-        <div class="conc-filter-field"><label class="conc-filter-label" for="conc-filter-from">Desde</label><input id="conc-filter-from" type="date" class="form-input" onchange="renderConcSinMatchFiltrado()"></div>
-        <div class="conc-filter-field"><label class="conc-filter-label" for="conc-filter-to">Hasta</label><input id="conc-filter-to" type="date" class="form-input" onchange="renderConcSinMatchFiltrado()"></div>
-        <button class="btn btn-outline" type="button" onclick="clearConcSinMatchFilters()">Limpiar filtros</button>
-      </div>
-      <div class="conc-filter-meta" id="conc-unmatched-meta">Mostrando ${sinMatchMov.length} de ${sinMatchMov.length} abono${sinMatchMov.length===1?'':'s'} sin match</div>
-      <div id="conc-unmatched-rows">`;
+    html+=`<div class="conc-section conc-warn"><div class="conc-section-title">⚠️ Abonos leídos sin factura exacta pendiente</div>`;
     sinMatchMov.forEach(m=>{
       html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>${fmt(m.monto)}</strong></span><span class="conc-row-fecha">${m.fecha} · ${m.desc}${m.archivo?' · '+m.archivo:''}</span></div></div>`;
     });
-    html+='</div></div>';
-  }else{
-    concSinMatchActual=[];
+    html+='</div>';
   }
   if(pendientes.length){
     html+=`<div class="conc-section conc-err"><div class="conc-section-title">❌ Facturas que siguen pendientes</div>`;
-    pendientes.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha} · ${paymentStatusNote(f)}</span></div><div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${f.id})">👁 Ver</button></div></div>`;});
+    pendientes.forEach(f=>{html+=`<div class="conc-row"><div class="conc-row-info"><span><strong>Folio ${f.folio}</strong> · ${f.cliente}</span><span class="conc-row-fecha">${f.fecha}</span></div><span class="conc-row-monto" style="color:var(--red)">${fmt(f.total)}</span></div>`;});
     html+='</div>';
   }
   if(!movimientos.length) html='<div style="text-align:center;padding:2rem;color:var(--muted)">No se encontraron abonos en los PDFs. Verifica que sean estados de cuenta BBVA México con movimientos tipo SPEI RECIBIDO.</div>';
