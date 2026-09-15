@@ -7,6 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
 <style>
 :root {
@@ -281,6 +283,24 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 }
 
 .action-group{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}.btn-sm{padding:.28rem .5rem!important;font-size:.68rem!important}.client-card.inactive{opacity:.58}.client-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}.client-actions{display:flex;gap:.35rem;flex-wrap:wrap}.billing-notice{display:none;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;color:#9a3412}.billing-notice.show{display:block}.billing-notice-title{font-weight:800;margin-bottom:.3rem}.billing-notice-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.3rem 0}.modal-wide{max-width:720px!important}.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-grid-2 .full{grid-column:1/-1}@media(max-width:700px){.form-grid-2{grid-template-columns:1fr}.form-grid-2 .full{grid-column:auto}}
+
+.report-modal{width:min(1220px,calc(100vw - 28px));max-width:1220px!important;}
+.report-filter-grid{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:.65rem;margin-bottom:.8rem;}
+.report-quick{display:flex;gap:.5rem;flex-wrap:wrap;margin:.25rem 0 .9rem;}
+.report-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:.65rem;margin:.8rem 0;}
+.report-kpi{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:.75rem;}
+.report-kpi-label{font-size:.61rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;}
+.report-kpi-value{font-family:var(--mono);font-size:.92rem;font-weight:800;margin-top:.2rem;}
+.report-preview-wrap{border:1px solid var(--border);border-radius:10px;overflow:auto;max-height:46vh;background:#fff;}
+.report-preview-table{width:100%;font-size:.7rem;}
+.report-preview-table th{position:sticky;top:0;background:#f8fafc;z-index:1;}
+.report-preview-table th,.report-preview-table td{padding:.48rem .55rem;white-space:nowrap;}
+.report-filter-summary{font-size:.7rem;color:var(--muted);padding:.55rem .7rem;background:#f8fafc;border:1px solid var(--border);border-radius:9px;margin-bottom:.75rem;}
+.report-actions{display:flex;gap:.55rem;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:1rem;}
+.report-actions-right{display:flex;gap:.55rem;flex-wrap:wrap;}
+@media(max-width:1100px){.report-filter-grid{grid-template-columns:repeat(3,minmax(150px,1fr));}.report-kpis{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:700px){.report-filter-grid,.report-kpis{grid-template-columns:1fr;}.report-modal{width:calc(100vw - 14px);}.report-actions-right{width:100%;}.report-actions-right .btn{width:100%;}}
+
 </style>
 </head>
 <body>
@@ -372,6 +392,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <input type="date" class="filter-input" onchange="renderFacturasTable()" id="filter-fecha-desde" title="Fecha desde">
       <input type="date" class="filter-input" onchange="renderFacturasTable()" id="filter-fecha-hasta" title="Fecha hasta">
       <button class="btn btn-outline" onclick="clearFacturaFilters()">Limpiar</button>
+      <button class="btn btn-primary" onclick="openReportModal()">📊 Generar reporte</button>
       <button class="btn btn-green" onclick="exportExcel()">⬇️ Exportar Excel</button>
     </div>
     <div class="table-wrap">
@@ -570,6 +591,50 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     <div style="display:flex;gap:.6rem;justify-content:space-between;flex-wrap:wrap;margin-top:1rem"><button class="btn btn-outline" onclick="downloadClientTemplate()">⬇️ Descargar plantilla</button><div style="display:flex;gap:.6rem"><button class="btn btn-outline" onclick="closeClientImportModal()">Cancelar</button><button class="btn btn-primary" id="client-import-commit" onclick="commitClientImport()">Importar clientes</button></div></div>
   </div>
 </div>
+
+<div class="modal-overlay" id="report-modal">
+  <div class="modal report-modal">
+    <div class="modal-header">
+      <div><div class="modal-title">Reporte de facturación y cobranza</div><div class="drawer-sub">Filtra la cartera y genera PDF, Excel o una versión para imprimir.</div></div>
+      <button class="modal-close" onclick="closeReportModal()">✕</button>
+    </div>
+    <div class="report-quick">
+      <button class="btn btn-outline btn-sm" onclick="resetReportToScreenFilters()">Vista actual</button>
+      <button class="btn btn-outline btn-sm" onclick="setReportPreset('pendiente')">Cartera pendiente</button>
+      <button class="btn btn-outline btn-sm" onclick="setReportPreset('vencido')">Facturas vencidas</button>
+      <button class="btn btn-outline btn-sm" onclick="setReportPreset('pagado')">Pagos recibidos</button>
+      <button class="btn btn-outline btn-sm" onclick="clearReportFilters()">Limpiar</button>
+    </div>
+    <div class="report-filter-grid">
+      <div class="filter-field"><label>Cliente</label><select class="filter-select" id="report-client" onchange="renderReportPreview()"><option value="">Todos</option></select></div>
+      <div class="filter-field"><label>RFC</label><input class="filter-input" id="report-rfc" placeholder="RFC receptor" oninput="renderReportPreview()"></div>
+      <div class="filter-field"><label>Estatus</label><select class="filter-select" id="report-status" onchange="renderReportPreview()"><option value="">Todos</option><option value="pendiente">Pendiente (incluye vencidas)</option><option value="vencido">Vencida</option><option value="pagado">Pagada</option><option value="complemento">Con complemento</option></select></div>
+      <div class="filter-field"><label>Desde</label><input type="date" class="filter-input" id="report-from" onchange="renderReportPreview()"></div>
+      <div class="filter-field"><label>Hasta</label><input type="date" class="filter-input" id="report-to" onchange="renderReportPreview()"></div>
+      <div class="filter-field"><label>Folio / búsqueda</label><input class="filter-input" id="report-search" placeholder="Folio, OC, descripción" oninput="renderReportPreview()"></div>
+    </div>
+    <div class="report-filter-summary" id="report-filter-summary"></div>
+    <div class="report-kpis">
+      <div class="report-kpi"><div class="report-kpi-label">Facturas</div><div class="report-kpi-value" id="report-kpi-count">0</div></div>
+      <div class="report-kpi"><div class="report-kpi-label">Total facturado</div><div class="report-kpi-value" id="report-kpi-total">$0.00</div></div>
+      <div class="report-kpi"><div class="report-kpi-label">Cobrado</div><div class="report-kpi-value" id="report-kpi-paid">$0.00</div></div>
+      <div class="report-kpi"><div class="report-kpi-label">Pendiente</div><div class="report-kpi-value" id="report-kpi-pending">$0.00</div></div>
+      <div class="report-kpi"><div class="report-kpi-label">Vencido</div><div class="report-kpi-value" id="report-kpi-overdue">$0.00</div></div>
+    </div>
+    <div class="report-preview-wrap">
+      <table class="report-preview-table"><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>RFC</th><th>Total</th><th>Estatus</th><th>F. pago</th><th>Vencimiento</th><th>Días vencida</th><th>OC</th></tr></thead><tbody id="report-preview-body"></tbody></table>
+    </div>
+    <div class="report-actions">
+      <div class="drawer-sub">El reporte usa exclusivamente los registros que aparecen en esta vista previa.</div>
+      <div class="report-actions-right">
+        <button class="btn btn-outline" onclick="printReport()">🖨️ Imprimir</button>
+        <button class="btn btn-green" onclick="exportReportExcel()">⬇️ Excel</button>
+        <button class="btn btn-primary" onclick="exportReportPdf()">📄 PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="drawer-overlay" id="dashboard-drawer" onclick="if(event.target===this) closeDashboardDetail()">
   <aside class="drawer" aria-label="Resumen de ficha">
     <div class="drawer-header">
@@ -852,14 +917,7 @@ function renderDashboard(){
     <td><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${f.id})" title="Ver factura">👁 Ver</button></td></tr>`).join('');
 }
 
-function renderFacturasTable(){
-  const search =document.getElementById('search-input').value.toLowerCase();
-  const cliente=document.getElementById('filter-cliente').value;
-  const status =document.getElementById('filter-status').value;
-  const mes    =document.getElementById('filter-mes').value;
-  const desde  =document.getElementById('filter-fecha-desde')?.value||'';
-  const hasta  =document.getElementById('filter-fecha-hasta')?.value||'';
-
+function ensureFacturaFilterOptions(){
   const selC=document.getElementById('filter-cliente');
   const currentClient=selC.value;
   const clientRfcs=[...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))].sort((a,b)=>(CLIENTES_CATALOG[a]?.name||a).localeCompare(CLIENTES_CATALOG[b]?.name||b,'es'));
@@ -870,8 +928,15 @@ function renderFacturasTable(){
   const months=[...new Set(facturas.map(f=>f.fecha?.substring(0,7)).filter(Boolean))].sort().reverse();
   selM.innerHTML='<option value="">Todos los meses</option>'+months.map(m=>`<option value="${m}">${m}</option>`).join('');
   if(months.includes(currentMonth))selM.value=currentMonth;
-
-  let data=facturas.filter(f=>{
+}
+function getFilteredFacturas(){
+  const search=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  const cliente=document.getElementById('filter-cliente')?.value||'';
+  const status=document.getElementById('filter-status')?.value||'';
+  const mes=document.getElementById('filter-mes')?.value||'';
+  const desde=document.getElementById('filter-fecha-desde')?.value||'';
+  const hasta=document.getElementById('filter-fecha-hasta')?.value||'';
+  return facturas.filter(f=>{
     if(search&&!([f.folio,f.cliente,f.rfcReceptor,f.oc,f.uuid,f.descripcion].some(v=>String(v||'').toLowerCase().includes(search)))) return false;
     if(cliente&&f.rfcReceptor!==cliente) return false;
     if(mes&&!f.fecha?.startsWith(mes)) return false;
@@ -881,8 +946,11 @@ function renderFacturasTable(){
     if(status==='pagado'&&!(f.estatusPago==='pagado'||f.estatusPago==='complemento')) return false;
     if(status&&status!=='vencido'&&status!=='pagado'&&f.estatusPago!==status) return false;
     return true;
-  });
-
+  }).sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))||String(b.folio||'').localeCompare(String(a.folio||'')));
+}
+function renderFacturasTable(){
+  ensureFacturaFilterOptions();
+  const data=getFilteredFacturas();
   const tbody=document.getElementById('facturas-table-body');
   if(!data.length){tbody.innerHTML='<tr><td colspan="9" class="empty">No hay facturas que coincidan</td></tr>';return;}
   tbody.innerHTML=data.map(f=>`<tr>
@@ -897,8 +965,111 @@ function renderFacturasTable(){
     <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="openInvoiceViewer(${f.id})" title="Ver factura y PDF">👁</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
   </tr>`).join('');
 }
-
 function clearFacturaFilters(){['search-input','filter-fecha-desde','filter-fecha-hasta'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['filter-cliente','filter-status','filter-mes'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderFacturasTable();}
+
+let currentReportData=[];
+function reportStatusLabel(f){if(isVencido(f))return 'Vencida';if(f.estatusPago==='complemento')return 'Pagada / complemento';if(f.estatusPago==='pagado')return 'Pagada';return 'Pendiente';}
+function reportDueDate(f){const d=dueDate(f);return d?`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`:'';}
+function populateReportClients(){
+  const el=document.getElementById('report-client');if(!el)return;
+  const old=el.value;
+  const rfcs=[...new Set(facturas.map(f=>f.rfcReceptor).filter(Boolean))].sort((a,b)=>(CLIENTES_CATALOG[a]?.name||a).localeCompare(CLIENTES_CATALOG[b]?.name||b,'es'));
+  el.innerHTML='<option value="">Todos</option>'+rfcs.map(r=>`<option value="${r}">${CLIENTES_CATALOG[r]?.name||facturas.find(f=>f.rfcReceptor===r)?.cliente||r}</option>`).join('');
+  if(rfcs.includes(old))el.value=old;
+}
+function resetReportToScreenFilters(){
+  populateReportClients();
+  document.getElementById('report-client').value=document.getElementById('filter-cliente')?.value||'';
+  document.getElementById('report-status').value=document.getElementById('filter-status')?.value||'';
+  document.getElementById('report-from').value=document.getElementById('filter-fecha-desde')?.value||'';
+  document.getElementById('report-to').value=document.getElementById('filter-fecha-hasta')?.value||'';
+  document.getElementById('report-search').value=document.getElementById('search-input')?.value||'';
+  document.getElementById('report-rfc').value='';
+  renderReportPreview();
+}
+function openReportModal(){populateReportClients();resetReportToScreenFilters();document.getElementById('report-modal').classList.add('open');}
+function closeReportModal(){document.getElementById('report-modal').classList.remove('open');}
+function clearReportFilters(){['report-rfc','report-from','report-to','report-search'].forEach(id=>document.getElementById(id).value='');['report-client','report-status'].forEach(id=>document.getElementById(id).value='');renderReportPreview();}
+function setReportPreset(type){
+  clearReportFilters();
+  document.getElementById('report-status').value=type;
+  renderReportPreview();
+}
+function getReportFilteredFacturas(){
+  const cliente=document.getElementById('report-client')?.value||'';
+  const rfc=(document.getElementById('report-rfc')?.value||'').trim().toLowerCase();
+  const status=document.getElementById('report-status')?.value||'';
+  const desde=document.getElementById('report-from')?.value||'';
+  const hasta=document.getElementById('report-to')?.value||'';
+  const search=(document.getElementById('report-search')?.value||'').trim().toLowerCase();
+  return facturas.filter(f=>{
+    if(cliente&&f.rfcReceptor!==cliente)return false;
+    if(rfc&&!String(f.rfcReceptor||'').toLowerCase().includes(rfc))return false;
+    if(desde&&String(f.fecha||'')<desde)return false;
+    if(hasta&&String(f.fecha||'')>hasta)return false;
+    if(search&&!([f.folio,f.cliente,f.rfcReceptor,f.oc,f.uuid,f.descripcion].some(v=>String(v||'').toLowerCase().includes(search))))return false;
+    if(status==='vencido'&&!isVencido(f))return false;
+    if(status==='pagado'&&!(f.estatusPago==='pagado'||f.estatusPago==='complemento'))return false;
+    if(status==='complemento'&&f.estatusPago!=='complemento')return false;
+    if(status==='pendiente'&&f.estatusPago!=='pendiente')return false;
+    return true;
+  }).sort((a,b)=>String(b.fecha||'').localeCompare(String(a.fecha||''))||String(b.folio||'').localeCompare(String(a.folio||'')));
+}
+function getReportFilterDescription(){
+  const parts=[];
+  const c=document.getElementById('report-client');if(c?.value)parts.push('Cliente: '+c.options[c.selectedIndex].text);
+  const r=document.getElementById('report-rfc')?.value.trim();if(r)parts.push('RFC: '+r.toUpperCase());
+  const st=document.getElementById('report-status');if(st?.value)parts.push('Estatus: '+st.options[st.selectedIndex].text.replace(/^[^A-Za-zÁÉÍÓÚÑ]+/,''));
+  const d=document.getElementById('report-from')?.value;if(d)parts.push('Desde: '+d);
+  const h=document.getElementById('report-to')?.value;if(h)parts.push('Hasta: '+h);
+  const q=document.getElementById('report-search')?.value.trim();if(q)parts.push('Búsqueda: '+q);
+  return parts.length?parts.join(' · '):'Sin filtros: todas las facturas';
+}
+function renderReportPreview(){
+  currentReportData=getReportFilteredFacturas();
+  const total=currentReportData.reduce((s,f)=>s+(Number(f.total)||0),0);
+  const paidRows=currentReportData.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');
+  const pendingRows=currentReportData.filter(f=>f.estatusPago==='pendiente');
+  const overdueRows=currentReportData.filter(isVencido);
+  document.getElementById('report-kpi-count').textContent=currentReportData.length;
+  document.getElementById('report-kpi-total').textContent=fmt(total);
+  document.getElementById('report-kpi-paid').textContent=fmt(paidRows.reduce((s,f)=>s+(Number(f.total)||0),0));
+  document.getElementById('report-kpi-pending').textContent=fmt(pendingRows.reduce((s,f)=>s+(Number(f.total)||0),0));
+  document.getElementById('report-kpi-overdue').textContent=fmt(overdueRows.reduce((s,f)=>s+(Number(f.total)||0),0));
+  document.getElementById('report-filter-summary').textContent=getReportFilterDescription()+` · ${currentReportData.length} factura(s)`;
+  const tb=document.getElementById('report-preview-body');
+  if(!currentReportData.length){tb.innerHTML='<tr><td colspan="10" class="empty">No hay facturas con estos filtros.</td></tr>';return;}
+  tb.innerHTML=currentReportData.map(f=>`<tr><td class="mono">${f.folio||''}</td><td class="mono">${f.fecha||''}</td><td>${f.cliente||''}</td><td class="mono">${f.rfcReceptor||''}</td><td class="mono"><strong>${fmt(Number(f.total)||0)}</strong></td><td>${reportStatusLabel(f)}</td><td class="mono">${f.fechaPago||'—'}</td><td class="mono">${reportDueDate(f)||'—'}</td><td class="mono">${isVencido(f)?daysOverdue(f):'—'}</td><td class="mono">${f.oc||'—'}</td></tr>`).join('');
+}
+function reportRowsForExport(data=currentReportData){return data.map(f=>[f.folio||'',f.fecha||'',f.cliente||'',f.rfcReceptor||'',Number(f.total)||0,reportStatusLabel(f),f.fechaPago||'',reportDueDate(f)||'',isVencido(f)?daysOverdue(f):0,f.oc||'',f.uuid||'',f.descripcion||'']);}
+function reportSummary(data=currentReportData){
+  const paid=data.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento');const pending=data.filter(f=>f.estatusPago==='pendiente');const overdue=data.filter(isVencido);
+  return {count:data.length,total:data.reduce((s,f)=>s+(Number(f.total)||0),0),paid:paid.reduce((s,f)=>s+(Number(f.total)||0),0),pending:pending.reduce((s,f)=>s+(Number(f.total)||0),0),overdue:overdue.reduce((s,f)=>s+(Number(f.total)||0),0)};
+}
+function exportReportExcel(){
+  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para exportar','⚠️');return;}
+  const sum=reportSummary(data);const wb=XLSX.utils.book_new();
+  const resumen=XLSX.utils.aoa_to_sheet([['MARKETING TDI SA DE CV'],['Reporte de facturación y cobranza'],['Generado',new Date().toLocaleString('es-MX')],['Filtros',getReportFilterDescription()],[],['Facturas',sum.count],['Total facturado',sum.total],['Cobrado',sum.paid],['Pendiente',sum.pending],['Vencido',sum.overdue]]);
+  const det=XLSX.utils.aoa_to_sheet([['Folio','Fecha','Cliente','RFC','Total','Estatus','Fecha pago','Vencimiento','Días vencida','OC','UUID','Descripción'],...reportRowsForExport(data)]);
+  XLSX.utils.book_append_sheet(wb,resumen,'Resumen');XLSX.utils.book_append_sheet(wb,det,'Facturas');
+  XLSX.writeFile(wb,`Reporte_Facturacion_TDI_${new Date().toISOString().slice(0,10)}.xlsx`);toast('Reporte Excel generado');
+}
+function exportReportPdf(){
+  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para exportar','⚠️');return;}
+  if(!window.jspdf?.jsPDF){toast('No se pudo cargar el generador PDF. Revisa tu conexión.','⚠️');return;}
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});const sum=reportSummary(data);
+  doc.setFont('helvetica','bold');doc.setFontSize(15);doc.text('MARKETING TDI SA DE CV',14,14);doc.setFontSize(11);doc.text('Reporte de facturación y cobranza',14,21);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);const filterLines=doc.splitTextToSize(getReportFilterDescription(),265);doc.text(filterLines,14,28);
+  const y=28+(filterLines.length*4)+3;doc.setFontSize(8);doc.text(`Facturas: ${sum.count}   Total: ${fmt(sum.total)}   Cobrado: ${fmt(sum.paid)}   Pendiente: ${fmt(sum.pending)}   Vencido: ${fmt(sum.overdue)}`,14,y);
+  doc.autoTable({startY:y+5,head:[['Folio','Fecha','Cliente','RFC','Total','Estatus','F. pago','Vencimiento','Días','OC']],body:data.map(f=>[f.folio||'',f.fecha||'',f.cliente||'',f.rfcReceptor||'',fmt(Number(f.total)||0),reportStatusLabel(f),f.fechaPago||'—',reportDueDate(f)||'—',isVencido(f)?String(daysOverdue(f)):'—',f.oc||'—']),styles:{fontSize:6.6,cellPadding:1.7},headStyles:{fillColor:[91,79,207]},columnStyles:{2:{cellWidth:43},3:{cellWidth:28},4:{halign:'right'},5:{cellWidth:25},9:{cellWidth:24}},margin:{left:10,right:10}});
+  doc.save(`Reporte_Facturacion_TDI_${new Date().toISOString().slice(0,10)}.pdf`);toast('Reporte PDF generado');
+}
+function escHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function printReport(){
+  const data=getReportFilteredFacturas();if(!data.length){toast('No hay facturas para imprimir','⚠️');return;}const sum=reportSummary(data);const w=window.open('','_blank');if(!w){toast('El navegador bloqueó la ventana de impresión','⚠️');return;}
+  const rows=data.map(f=>`<tr><td>${escHtml(f.folio)}</td><td>${escHtml(f.fecha)}</td><td>${escHtml(f.cliente)}</td><td>${escHtml(f.rfcReceptor)}</td><td class="num">${escHtml(fmt(Number(f.total)||0))}</td><td>${escHtml(reportStatusLabel(f))}</td><td>${escHtml(f.fechaPago||'—')}</td><td>${escHtml(reportDueDate(f)||'—')}</td><td>${isVencido(f)?daysOverdue(f):'—'}</td><td>${escHtml(f.oc||'—')}</td></tr>`).join('');
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Reporte Facturación TDI</title><style>body{font-family:Arial,sans-serif;color:#1a1d23;margin:24px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:5px 0 14px}.meta{font-size:11px;color:#555;margin-bottom:12px}.kpis{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.k{border:1px solid #ddd;border-radius:7px;padding:8px 10px;min-width:145px}.k b{display:block;font-size:12px;margin-top:3px}table{width:100%;border-collapse:collapse;font-size:9px}th,td{border:1px solid #ddd;padding:5px;text-align:left}th{background:#f1f3f7}.num{text-align:right;white-space:nowrap}@page{size:landscape;margin:10mm}</style></head><body><h1>MARKETING TDI SA DE CV</h1><h2>Reporte de facturación y cobranza</h2><div class="meta">${escHtml(getReportFilterDescription())}<br>Generado: ${escHtml(new Date().toLocaleString('es-MX'))}</div><div class="kpis"><div class="k">Facturas<b>${sum.count}</b></div><div class="k">Total facturado<b>${escHtml(fmt(sum.total))}</b></div><div class="k">Cobrado<b>${escHtml(fmt(sum.paid))}</b></div><div class="k">Pendiente<b>${escHtml(fmt(sum.pending))}</b></div><div class="k">Vencido<b>${escHtml(fmt(sum.overdue))}</b></div></div><table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>RFC</th><th>Total</th><th>Estatus</th><th>F. pago</th><th>Vencimiento</th><th>Días vencida</th><th>OC</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=()=>{window.print()}<\/script></body></html>`);w.document.close();
+}
 
 function openModal(id){
   editingId=id;
@@ -1326,13 +1497,15 @@ function resetNueva(){
 }
 
 function exportExcel(){
+  const data=getFilteredFacturas();
+  if(!data.length){toast('No hay facturas filtradas para exportar','⚠️');return;}
   const rows=[['Folio','UUID','Fecha','RFC Receptor','Cliente','Descripción','Subtotal','IVA','Total','OC','Estatus SAT','Estatus Pago','Fecha Pago','Monto Pago','Fecha Complemento','UUID Complemento']];
-  facturas.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',isVencido(f)?'Vencida':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'',f.complementoUuid||'']));
+  data.forEach(f=>rows.push([f.folio,f.uuid,f.fecha,f.rfcReceptor,f.cliente,f.descripcion,f.subtotal,f.iva,f.total,f.oc,'Vigente',reportStatusLabel(f),f.fechaPago||'',f.montoPago||'',f.fechaComplemento||'',f.complementoUuid||'']));
   const ws=XLSX.utils.aoa_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Facturas');
-  XLSX.writeFile(wb,'Control_Facturacion_TDI.xlsx');
-  toast('Excel exportado');
+  XLSX.writeFile(wb,`Control_Facturacion_TDI_filtrado_${new Date().toISOString().slice(0,10)}.xlsx`);
+  toast(`${data.length} factura(s) exportadas a Excel`);
 }
 
 renderDashboard();
