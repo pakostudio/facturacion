@@ -17,22 +17,22 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{scroll-behavior:smooth;}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;max-width:100vw;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;max-width:100vw;}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06);}
 .topbar-brand{display:flex;align-items:center;gap:.75rem;}
 .topbar-logo{width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;color:#fff;}
 .topbar-title{font-weight:700;font-size:1rem;letter-spacing:-.02em;color:var(--text);}
 .topbar-sub{font-size:.7rem;color:var(--muted);font-family:var(--mono);}
 .topbar-date{font-family:var(--mono);font-size:.75rem;color:var(--muted);}
-.layout{display:flex;min-height:calc(100vh - 60px);width:100%;max-width:100vw;overflow:hidden;}
-.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;box-shadow:1px 0 4px rgba(0,0,0,.04);}
+.layout{display:flex;height:calc(100vh - 60px);width:100%;max-width:100vw;overflow:hidden;}
+.sidebar{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:1.5rem 0;height:100%;overflow-y:auto;overscroll-behavior:contain;box-shadow:1px 0 4px rgba(0,0,0,.04);}
 .nav-section{margin-bottom:1.5rem;}
 .nav-label{font-size:.65rem;font-weight:600;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;padding:0 1.25rem;margin-bottom:.5rem;}
 .nav-item{display:flex;align-items:center;gap:.6rem;padding:.55rem 1.25rem;cursor:pointer;font-size:.85rem;color:var(--muted);transition:all .15s;border-left:2px solid transparent;}
 .nav-item:hover{color:var(--accent);background:rgba(91,79,207,.05);}
 .nav-item.active{color:var(--accent);border-left-color:var(--accent);background:rgba(91,79,207,.08);font-weight:600;}
 .nav-icon{font-size:1rem;width:18px;text-align:center;}
-.main{flex:1;min-width:0;width:calc(100vw - 220px);max-width:calc(100vw - 220px);padding:1.75rem 1.5rem;overflow-y:auto;overflow-x:hidden;background:var(--bg);box-sizing:border-box;}
+.main{flex:1;min-width:0;width:calc(100vw - 220px);max-width:calc(100vw - 220px);height:100%;padding:1.75rem 1.5rem;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;background:var(--bg);box-sizing:border-box;}
 .view{display:none;}.view.active{display:block;}
 .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden;transition:transform .2s, box-shadow .2s;box-shadow:0 1px 4px rgba(0,0,0,.06);}
@@ -234,7 +234,10 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
   .conc-row{align-items:flex-start;gap:.75rem;flex-direction:column;}
 }
 
-.action-group{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}.btn-sm{padding:.28rem .5rem!important;font-size:.68rem!important}.client-card.inactive{opacity:.58}.client-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}.client-actions{display:flex;gap:.35rem;flex-wrap:wrap}.billing-notice{display:none;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;color:#9a3412}.billing-notice.show{display:block}.billing-notice-title{font-weight:800;margin-bottom:.3rem}.billing-notice-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.3rem 0}.modal-wide{max-width:720px!important}.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-grid-2 .full{grid-column:1/-1}@media(max-width:700px){.form-grid-2{grid-template-columns:1fr}.form-grid-2 .full{grid-column:auto}}
+.action-group{display:flex;gap:.3rem;align-items:center;flex-wrap:wrap}.btn-danger{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca}.btn-danger:hover{background:#fecaca}.btn-sm{padding:.28rem .5rem!important;font-size:.68rem!important}.client-card.inactive{opacity:.58}.client-card-head{display:flex;justify-content:space-between;gap:.75rem;align-items:flex-start}.client-actions{display:flex;gap:.35rem;flex-wrap:wrap}.billing-notice{display:none;background:#fff7ed;border:1px solid #fdba74;border-left:4px solid #f97316;border-radius:10px;padding:.9rem 1rem;margin-bottom:1rem;color:#9a3412}.billing-notice.show{display:block}.billing-notice-title{font-weight:800;margin-bottom:.3rem}.billing-notice-row{display:flex;justify-content:space-between;gap:1rem;align-items:center;padding:.3rem 0}.modal-wide{max-width:720px!important}.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}.form-grid-2 .full{grid-column:1/-1}@media(max-width:700px){
+  body{height:auto;overflow:auto;}
+  .layout{height:auto;min-height:calc(100vh - 60px);overflow:visible;}
+.form-grid-2{grid-template-columns:1fr}.form-grid-2 .full{grid-column:auto}}
 </style>
 </head>
 <body>
@@ -399,7 +402,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     <div id="conc-loading" style="display:none;text-align:center;padding:2rem;color:var(--muted);font-size:.85rem;">⏳ Leyendo estados de cuenta…</div>
     <div id="conc-results" class="conc-results"></div>
     <div style="margin-top:2rem">
-      <div class="page-header" style="margin-bottom:1rem"><div class="page-title" style="font-size:1.15rem">Estados de cuenta guardados</div><div class="page-sub">Consulta, descarga, reemplaza o elimina los PDFs que ya anexaste.</div></div>
+      <div class="page-header" style="margin-bottom:1rem;display:flex;justify-content:space-between;align-items:end;gap:1rem;flex-wrap:wrap"><div><div class="page-title" style="font-size:1.15rem">Estados de cuenta guardados</div><div class="page-sub">Consulta, descarga, reemplaza o elimina los PDFs que ya anexaste.</div></div><button class="btn btn-primary" onclick="reconcileAllSavedStatements()">🔄 Conciliar todos los estados guardados</button></div>
       <div style="overflow-x:auto;background:white;border:1px solid var(--border);border-radius:10px">
         <table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr style="background:#f8fafc;text-align:left"><th style="padding:.75rem">Banco</th><th style="padding:.75rem">Periodo</th><th style="padding:.75rem">Archivo</th><th style="padding:.75rem">Fecha de carga</th><th style="padding:.75rem">Acciones</th></tr></thead><tbody id="statement-library-body"></tbody></table>
       </div>
@@ -606,6 +609,19 @@ if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
 
 let pendingFactura=null,pendingOC=null,pendingComplemento=null,pendingFacturaFile=null,editingId=null,selectedStatus=null;
 function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
+
+// Conciliación verificada contra estados de cuenta disponibles (enero-marzo 2026).
+// Solo corrige registros que sigan pendientes; nunca pisa una edición manual pagada/complemento.
+const VERIFIED_PAYMENTS={
+  '346':{fecha:'2026-01-27',monto:29000,fuente:'BBVA enero 2026'},
+  '356':{fecha:'2026-01-26',monto:29000,fuente:'BBVA enero 2026'},
+  '357':{fecha:'2026-02-03',monto:78137.14,fuente:'BBVA febrero 2026'},
+  '361':{fecha:'2026-02-26',monto:29000,fuente:'BBVA febrero 2026'},
+  '363':{fecha:'2026-02-24',monto:29000,fuente:'BBVA febrero 2026'},
+  '365':{fecha:'2026-03-10',monto:29000,fuente:'BBVA marzo 2026'},
+  '366':{fecha:'2026-03-24',monto:29000,fuente:'BBVA marzo 2026'}
+};
+(function applyVerifiedPayments(){let changed=false;facturas.forEach(f=>{const v=VERIFIED_PAYMENTS[String(f.folio)];if(v&&f.estatusPago==='pendiente'){f.estatusPago='pagado';f.fechaPago=v.fecha;f.montoPago=v.monto;f.bancoArchivo=v.fuente;f.conciliacionVerificada=true;changed=true;}});if(changed)save();})();
 
 document.getElementById('topbar-date').textContent=
   new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -1242,6 +1258,31 @@ function chooseReplaceStatement(id){replacingStatementId=id;const i=document.get
 async function replaceStatementFile(input){const f=input.files[0],x=statementMeta.find(s=>s.id===replacingStatementId);if(!f||!x)return;if(f.type&&f.type!=='application/pdf'){toast('Selecciona un PDF válido','⚠️');return;}const text=await extractText(f);await storeStatementBlob(x.id,f);x.name=f.name;x.period=extractStatementPeriod(text,f.name);x.uploadedAt=new Date().toISOString();x.size=f.size;saveStatementMeta();renderStatementLibrary();toast('Estado de cuenta reemplazado');replacingStatementId=null;}
 async function deleteStatement(id){const x=statementMeta.find(s=>s.id===id);if(!x||!confirm(`¿Eliminar el estado de cuenta ${x.period}?`))return;await deleteStatementBlob(id);statementMeta=statementMeta.filter(s=>s.id!==id);saveStatementMeta();renderStatementLibrary();toast('Estado de cuenta eliminado');}
 
+async function reconcileAllSavedStatements(){
+  if(!statementMeta.length){toast('No hay estados de cuenta guardados','⚠️');return;}
+  document.getElementById('conc-loading').style.display='block';
+  document.getElementById('conc-results').innerHTML='';
+  try{
+    let allMovimientos=[], processed=0;
+    for(const meta of statementMeta){
+      const blob=await getStatementBlob(meta.id);
+      if(!blob) continue;
+      const file=new File([blob],meta.name||'estado.pdf',{type:blob.type||'application/pdf'});
+      const text=await extractText(file);
+      const year=extractStatementYear(text,file.name);
+      const movs=parseBBVA(text,year);
+      movs.forEach(m=>m.archivo=file.name);
+      allMovimientos=allMovimientos.concat(movs);processed++;
+    }
+    const seen=new Set();
+    allMovimientos=allMovimientos.filter(m=>{const key=`${m.fecha}-${m.monto}-${normTxt(m.desc)}`;if(seen.has(key))return false;seen.add(key);return true;});
+    renderConciliacion(allMovimientos,processed);
+    renderDashboard();renderFacturas();
+    toast('Conciliación completa con '+processed+' estado(s) de cuenta');
+  }catch(e){console.error(e);document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error al conciliar estados guardados: '+e.message+'</div>';}
+  document.getElementById('conc-loading').style.display='none';
+}
+
 // ── CONCILIACIÓN ──────────────────────────────────────────────────────────────
 function handleConcDrop(ev){
   ev.preventDefault();
@@ -1332,31 +1373,29 @@ function dateFromMov(fechaMov){
 }
 function matchScoreFactura(f,mov,usedFacturas){
   if(usedFacturas.has(f.id)) return -9999;
-  if(f.estatusPago==='pagado'||f.estatusPago==='complemento') return -9999;
+  if(f.estatusPago==='pagado'||f.estatusPago==='complemento'||f.estatusSAT==='cancelada') return -9999;
   const diff=Math.abs((f.total||0)-mov.monto);
   if(diff>=1) return -9999;
+  const movDate=dateFromMov(mov.fecha),facDate=new Date(f.fecha+'T00:00:00');
+  if(movDate&&!isNaN(facDate)&&movDate<facDate) return -9999;
   let score=1000-diff;
-  const movTxt=normTxt(mov.desc);
-  const cli=normTxt(f.cliente);
-  const rfc=normTxt(f.rfcReceptor);
-  if(cli && movTxt.includes(cli.substring(0,Math.min(cli.length,14)))) score+=600;
-  if(rfc && movTxt.includes(rfc)) score+=400;
-  const movDate=dateFromMov(mov.fecha);
-  const facDate=new Date(f.fecha+'T00:00:00');
-  if(movDate && !isNaN(facDate)){
-    const days=(movDate-facDate)/(1000*60*60*24);
-    if(days>=0) score+=Math.max(0,180-Math.min(days,180));
-    else score-=500;
-  }
+  const movTxt=normTxt(mov.desc),cli=normTxt(f.cliente),rfc=normTxt(f.rfcReceptor);
+  const clientHit=!!(cli&&movTxt.includes(cli.substring(0,Math.min(cli.length,14))));
+  const rfcHit=!!(rfc&&movTxt.includes(rfc));
+  if(clientHit) score+=700;if(rfcHit) score+=500;
+  if(movDate&&!isNaN(facDate)){const days=(movDate-facDate)/86400000;score+=Math.max(0,180-Math.min(days,180));}
   return score;
 }
 function findFacturaMatch(mov,usedFacturas){
-  let best=null,bestScore=-9999;
-  facturas.forEach(f=>{
-    const sc=matchScoreFactura(f,mov,usedFacturas);
-    if(sc>bestScore){best=f;bestScore=sc;}
-  });
-  return bestScore>0?{factura:best,score:bestScore}:null;
+  const candidates=facturas.filter(f=>matchScoreFactura(f,mov,usedFacturas)>0);
+  if(!candidates.length)return null;
+  const movTxt=normTxt(mov.desc);
+  const identified=candidates.filter(f=>{const cli=normTxt(f.cliente),rfc=normTxt(f.rfcReceptor);return (cli&&movTxt.includes(cli.substring(0,Math.min(cli.length,14))))||(rfc&&movTxt.includes(rfc));});
+  const pool=identified.length?identified:candidates;
+  // Si el banco no identifica al cliente y hay varias facturas del mismo importe, no adivinar.
+  if(!identified.length&&pool.length!==1)return null;
+  let best=null,bestScore=-9999;pool.forEach(f=>{const sc=matchScoreFactura(f,mov,usedFacturas);if(sc>bestScore){best=f;bestScore=sc;}});
+  return best?{factura:best,score:bestScore}:null;
 }
 function autoAplicarConciliacion(exactos){
   let count=0;
