@@ -188,6 +188,9 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
 .alert-status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
 .dot-active{background:var(--green);}
 .dot-inactive{background:#cbd5e1;}
+.badge-blue{background:#dbeafe;color:#1d4ed8;}
+.report-summary{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:1rem;margin-bottom:1.25rem;}
+@media(max-width:850px){.report-summary{grid-template-columns:1fr 1fr;}}
 
 .drawer-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.28);z-index:250;align-items:stretch;justify-content:flex-end;}
 .drawer-overlay.open{display:flex;}
@@ -264,6 +267,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     <div class="nav-item" onclick="showView('clientes',this)"><span class="nav-icon">🏢</span> Clientes</div>
     <div class="nav-item" onclick="showView('alertas',this)"><span class="nav-icon">🔔</span> Alertas</div>
     <div class="nav-item" onclick="showView('conciliacion',this)"><span class="nav-icon">🏦</span> Conciliación</div>
+    <div class="nav-item" onclick="showView('reportes',this)"><span class="nav-icon">📑</span> Reportes</div>
   </div>
 </nav>
 <main class="main">
@@ -303,6 +307,7 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
         <option value="pendiente">⏳ Pendiente</option>
         <option value="pagado">✅ Pagado</option>
         <option value="complemento">📄 Complemento</option>
+        <option value="por_conciliar">🔎 Por conciliar</option>
         <option value="vencido">❌ Vencido</option>
       </select>
       <select class="filter-select" onchange="renderFacturasTable()" id="filter-mes"><option value="">Todos los meses</option></select>
@@ -410,6 +415,28 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
     </div>
   </div>
 
+  <!-- REPORTES -->
+  <div id="view-reportes" class="view">
+    <div class="page-header"><div class="page-title">Reportes de cobranza</div><div class="page-sub">Filtra por cliente, estatus y rango de fechas. Los totales se recalculan con el resultado visible.</div></div>
+    <div class="toolbar">
+      <select class="filter-select" id="report-cliente" onchange="renderReport()"><option value="">Todos los clientes</option></select>
+      <select class="filter-select" id="report-status" onchange="renderReport()"><option value="">Todos los estatus</option><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option><option value="vencido">Vencido</option><option value="por_conciliar">Por conciliar</option><option value="complemento">Con complemento</option></select>
+      <label class="filter-input">Desde <input type="date" id="report-desde" onchange="renderReport()" style="border:0;outline:0;font-family:inherit"></label>
+      <label class="filter-input">Hasta <input type="date" id="report-hasta" onchange="renderReport()" style="border:0;outline:0;font-family:inherit"></label>
+      <input class="filter-input" id="report-search" placeholder="Folio, RFC, cliente, OC…" oninput="renderReport()">
+      <button class="btn btn-outline" onclick="clearReportFilters()">Limpiar</button>
+      <button class="btn btn-green" onclick="exportReportExcel()">⬇️ Excel</button>
+      <button class="btn btn-primary" onclick="printReport()">🖨️ Imprimir / PDF</button>
+    </div>
+    <div class="report-summary">
+      <div class="stat-card purple"><div class="stat-label">Facturado</div><div class="stat-value purple" id="report-total">$0.00</div><div class="stat-sub" id="report-count">0 facturas</div></div>
+      <div class="stat-card green"><div class="stat-label">Cobrado</div><div class="stat-value green" id="report-cobrado">$0.00</div></div>
+      <div class="stat-card yellow"><div class="stat-label">Pendiente</div><div class="stat-value yellow" id="report-pendiente">$0.00</div></div>
+      <div class="stat-card red"><div class="stat-label">Vencido</div><div class="stat-value red" id="report-vencido">$0.00</div></div>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>RFC</th><th>Total</th><th>Estatus</th><th>F. pago</th><th>OC</th></tr></thead><tbody id="report-body"></tbody></table></div>
+  </div>
+
 </main>
 </div>
 
@@ -425,6 +452,9 @@ input:checked+.toggle-slider:before{transform:translateX(16px);}
       <div class="status-option" onclick="selectStatus('pendiente')" id="opt-pendiente">
         <div class="status-option-icon">⏳</div>
         <div class="status-option-info"><div class="status-option-name">Pendiente de pago</div><div class="status-option-desc">Sin pago registrado</div></div>
+      </div>
+      <div class="status-option" onclick="selectStatus('por_conciliar')" id="opt-por_conciliar">
+        <div class="status-option-icon">🔎</div><div class="status-option-info"><div class="status-option-name">Pendiente de conciliar</div><div class="status-option-desc">No se ha cargado el estado de cuenta del periodo</div></div>
       </div>
       <div class="status-option" onclick="selectStatus('pagado')" id="opt-pagado">
         <div class="status-option-icon">✅</div>
@@ -610,8 +640,9 @@ if(!facturas||facturas.length===0||facturas.length<SEED_DATA.length){
 let pendingFactura=null,pendingOC=null,pendingComplemento=null,pendingFacturaFile=null,editingId=null,selectedStatus=null;
 function save(){localStorage.setItem('tdi_facturas',JSON.stringify(facturas));}
 
-// Conciliación verificada contra estados de cuenta disponibles (enero-marzo 2026).
-// Solo corrige registros que sigan pendientes; nunca pisa una edición manual pagada/complemento.
+// Conciliación verificada contra evidencia bancaria disponible hasta julio 2026.
+// Solo se precargan pagos con referencia inequívoca (folio/cliente/importe) o complemento CFDI.
+// Movimientos ambiguos (por ejemplo depósitos globales) permanecen sin asignar hasta conciliarlos con evidencia adicional.
 const VERIFIED_PAYMENTS={
   '346':{fecha:'2026-01-27',monto:29000,fuente:'BBVA enero 2026'},
   '356':{fecha:'2026-01-26',monto:29000,fuente:'BBVA enero 2026'},
@@ -619,9 +650,16 @@ const VERIFIED_PAYMENTS={
   '361':{fecha:'2026-02-26',monto:29000,fuente:'BBVA febrero 2026'},
   '363':{fecha:'2026-02-24',monto:29000,fuente:'BBVA febrero 2026'},
   '365':{fecha:'2026-03-10',monto:29000,fuente:'BBVA marzo 2026'},
-  '366':{fecha:'2026-03-24',monto:29000,fuente:'BBVA marzo 2026'}
+  '366':{fecha:'2026-03-24',monto:29000,fuente:'BBVA marzo 2026'},
+  '418':{fecha:'2026-07-03',monto:23200,fuente:'BBVA julio 2026 · FPZ'},
+  '410':{fecha:'2026-07-08',monto:142680,fuente:'BBVA julio 2026 · FACT 410'},
+  '406':{fecha:'2026-07-10',monto:29656.56,fuente:'BBVA julio 2026 · PAGO RAAF FACT 406'},
+  '411':{fecha:'2026-07-22',monto:29000,fuente:'BBVA julio 2026 · F 411'},
+  '429':{fecha:'2026-07-27',monto:29000,fuente:'BBVA julio 2026 · F 429'},
+  '409':{fecha:'2026-07-28',monto:87000,fuente:'Complemento CFDI 438 · pago 28/jul'},
+  '417':{fecha:'2026-07-30',monto:55680,fuente:'BBVA julio 2026 · BEPENSA'}
 };
-(function applyVerifiedPayments(){let changed=false;facturas.forEach(f=>{const v=VERIFIED_PAYMENTS[String(f.folio)];if(v&&f.estatusPago==='pendiente'){f.estatusPago='pagado';f.fechaPago=v.fecha;f.montoPago=v.monto;f.bancoArchivo=v.fuente;f.conciliacionVerificada=true;changed=true;}});if(changed)save();})();
+(function applyVerifiedPayments(){let changed=false;facturas.forEach(f=>{const v=VERIFIED_PAYMENTS[String(f.folio)];if(v&&(f.estatusPago==='pendiente'||f.estatusPago==='por_conciliar')){f.estatusPago='pagado';f.fechaPago=v.fecha;f.montoPago=v.monto;f.bancoArchivo=v.fuente;f.conciliacionVerificada=true;changed=true;}if(f.fecha?.startsWith('2026-08')&&f.estatusPago==='pendiente'){f.estatusPago='por_conciliar';f.notaConciliacion='Agosto 2026 · estado de cuenta no disponible en esta revisión';changed=true;}});if(changed)save();})();
 
 document.getElementById('topbar-date').textContent=
   new Date().toLocaleDateString('es-MX',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -637,6 +675,7 @@ function showView(id,el){
   if(id==='alertas')   renderAlertas();
   if(id==='nueva')     resetNueva();
   if(id==='conciliacion') renderStatementLibrary();
+  if(id==='reportes') renderReport();
 }
 
 function toast(msg,emoji='✅'){
@@ -663,6 +702,7 @@ function statusBadge(f){
   if(isVencido(f))                    return '<span class="badge badge-red">❌ Vencida</span>';
   if(f.estatusPago==='pagado')        return '<span class="badge badge-green">✅ Pagado</span>';
   if(f.estatusPago==='complemento')   return '<span class="badge badge-green">✅ Pagado</span>';
+  if(f.estatusPago==='por_conciliar') return '<span class="badge badge-blue">🔎 Por conciliar</span>';
   return '<span class="badge badge-yellow">⏳ Pendiente</span>';
 }
 function complementoBadge(f){
@@ -820,7 +860,7 @@ function renderFacturasTable(){
     <td>${statusBadge(f)}</td>
     <td class="mono">${f.fechaPago||'—'}</td>
     <td>${complementoBadge(f)}${f.fechaComplemento?`<div class="mini-cell mono">${f.fechaComplemento}</div>`:''}</td>
-    <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="downloadInvoicePdf(${f.id})" title="Abrir/descargar PDF">PDF</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
+    <td><div class="action-group"><button class="btn btn-outline btn-sm" onclick="openInvoiceEdit(${f.id})" title="Editar factura">✏️</button><button class="btn btn-outline btn-sm" onclick="openModal(${f.id})" title="Estatus de pago">💳</button><button class="btn btn-outline btn-sm" onclick="viewInvoicePdf(${f.id})" title="Visualizar factura PDF">Ver</button><button class="btn btn-danger btn-sm" onclick="deleteInvoice(${f.id})" title="Eliminar factura">🗑</button></div></td>
   </tr>`).join('');
 }
 
@@ -896,6 +936,8 @@ function pdfDb(){return new Promise((resolve,reject)=>{const req=indexedDB.open(
 async function storePdfBlob(id,file){const db=await pdfDb();return new Promise((res,rej)=>{const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').put(file,id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
 async function getPdfBlob(id){const db=await pdfDb();return new Promise((res,rej)=>{const r=db.transaction('pdfs').objectStore('pdfs').get(id);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 async function deletePdfBlob(id){try{const db=await pdfDb();const tx=db.transaction('pdfs','readwrite');tx.objectStore('pdfs').delete(id);}catch(e){}}
+async function viewInvoicePdf(id){const blob=await getPdfBlob(id);if(!blob){toast('Esta factura no tiene PDF almacenado. Vuelve a asociarlo desde Editar factura.','⚠️');return;}const url=URL.createObjectURL(blob);window.open(url,'_blank','noopener');setTimeout(()=>URL.revokeObjectURL(url),60000);}
+
 async function downloadInvoicePdf(id){const f=facturas.find(x=>x.id===id);const blob=await getPdfBlob(id);if(!blob){toast('Esta factura no tiene PDF almacenado. Los PDFs subidos antes de esta actualización deben volver a cargarse.','⚠️');return;}const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`Factura_${f?.folio||id}.pdf`;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 
 // PDF upload para nuevas facturas
@@ -1180,6 +1222,20 @@ setTimeout(()=>renderBillingNotices(),100);
 // EmailJS retirado. El envío automático se conectará a Resend mediante una función segura en Vercel.
 
 // ── ALERTAS CONFIG ────────────────────────────────────────────────────────────
+function reportFilteredData(){
+  const cliente=document.getElementById('report-cliente')?.value||'',status=document.getElementById('report-status')?.value||'',desde=document.getElementById('report-desde')?.value||'',hasta=document.getElementById('report-hasta')?.value||'',q=(document.getElementById('report-search')?.value||'').toLowerCase();
+  return facturas.filter(f=>{if(cliente&&f.rfcReceptor!==cliente)return false;if(desde&&f.fecha<desde)return false;if(hasta&&f.fecha>hasta)return false;if(q&&!`${f.folio} ${f.cliente} ${f.rfcReceptor} ${f.oc||''}`.toLowerCase().includes(q))return false;if(status==='vencido'&&!isVencido(f))return false;if(status&&status!=='vencido'&&f.estatusPago!==status)return false;return true;});
+}
+function renderReport(){
+  const sel=document.getElementById('report-cliente');if(!sel)return;if(sel.children.length<=1){Object.entries(CLIENTES_CATALOG).sort((a,b)=>a[1].name.localeCompare(b[1].name)).forEach(([rfc,c])=>{const o=document.createElement('option');o.value=rfc;o.textContent=c.name;sel.appendChild(o);});}
+  const data=reportFilteredData(),cob=data.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento'),pen=data.filter(f=>f.estatusPago==='pendiente'&&!isVencido(f)),ven=data.filter(isVencido);
+  document.getElementById('report-total').textContent=fmt(data.reduce((s,f)=>s+f.total,0));document.getElementById('report-count').textContent=data.length+' facturas';document.getElementById('report-cobrado').textContent=fmt(cob.reduce((s,f)=>s+f.total,0));document.getElementById('report-pendiente').textContent=fmt(pen.reduce((s,f)=>s+f.total,0));document.getElementById('report-vencido').textContent=fmt(ven.reduce((s,f)=>s+f.total,0));
+  const body=document.getElementById('report-body');body.innerHTML=data.length?data.map(f=>`<tr><td class="mono">${f.folio}</td><td class="mono">${f.fecha}</td><td>${f.cliente}</td><td class="mono">${f.rfcReceptor}</td><td class="mono"><strong>${fmt(f.total)}</strong></td><td>${statusBadge(f)}</td><td class="mono">${f.fechaPago||'—'}</td><td class="mono">${f.oc||'—'}</td></tr>`).join(''):'<tr><td colspan="8" class="empty">No hay resultados con estos filtros</td></tr>';
+}
+function clearReportFilters(){['report-cliente','report-status','report-desde','report-hasta','report-search'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});renderReport();}
+function exportReportExcel(){const data=reportFilteredData(),rows=[['Folio','Fecha','Cliente','RFC','Total','Estatus','Fecha pago','Monto pago','OC','Fuente conciliación']];data.forEach(f=>rows.push([f.folio,f.fecha,f.cliente,f.rfcReceptor,f.total,isVencido(f)?'vencido':f.estatusPago,f.fechaPago||'',f.montoPago||'',f.oc||'',f.bancoArchivo||'']));const ws=XLSX.utils.aoa_to_sheet(rows),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Reporte');XLSX.writeFile(wb,'Reporte_Cobranza_TDI.xlsx');toast('Reporte exportado');}
+function printReport(){const data=reportFilteredData(),total=data.reduce((s,f)=>s+f.total,0),cob=data.filter(f=>f.estatusPago==='pagado'||f.estatusPago==='complemento').reduce((s,f)=>s+f.total,0),pend=data.filter(f=>f.estatusPago==='pendiente').reduce((s,f)=>s+f.total,0);const w=window.open('','_blank');if(!w){toast('Permite ventanas emergentes para imprimir','⚠️');return;}w.document.write(`<html><head><title>Reporte Cobranza TDI</title><style>body{font-family:Arial,sans-serif;color:#1f2937;padding:28px}h1{font-size:20px}p{color:#64748b}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border-bottom:1px solid #e5e7eb;padding:7px;text-align:left}th{background:#f8fafc}.num{text-align:right}.k{display:flex;gap:24px;margin:18px 0}.k b{display:block;font-size:16px}</style></head><body><h1>MARKETING TDI · Reporte de cobranza</h1><p>Generado ${new Date().toLocaleString('es-MX')}</p><div class="k"><span>Facturas<b>${data.length}</b></span><span>Facturado<b>${fmt(total)}</b></span><span>Cobrado<b>${fmt(cob)}</b></span><span>Pendiente<b>${fmt(pend)}</b></span></div><table><thead><tr><th>Folio</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Estatus</th><th>Fecha pago</th></tr></thead><tbody>${data.map(f=>`<tr><td>${f.folio}</td><td>${f.fecha}</td><td>${f.cliente}</td><td class="num">${fmt(f.total)}</td><td>${isVencido(f)?'Vencida':f.estatusPago}</td><td>${f.fechaPago||'—'}</td></tr>`).join('')}</tbody></table><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();}
+
 let alertConfig = JSON.parse(localStorage.getItem('tdi_alertas')||'{}');
 Object.keys(CLIENTES_CATALOG).forEach(rfc=>{
   if(!alertConfig[rfc]) alertConfig[rfc]={active:false,dia:1};
@@ -1277,7 +1333,7 @@ async function reconcileAllSavedStatements(){
     const seen=new Set();
     allMovimientos=allMovimientos.filter(m=>{const key=`${m.fecha}-${m.monto}-${normTxt(m.desc)}`;if(seen.has(key))return false;seen.add(key);return true;});
     renderConciliacion(allMovimientos,processed);
-    renderDashboard();renderFacturas();
+    renderDashboard();renderFacturasTable();
     toast('Conciliación completa con '+processed+' estado(s) de cuenta');
   }catch(e){console.error(e);document.getElementById('conc-results').innerHTML='<div style="color:var(--red);padding:1rem">❌ Error al conciliar estados guardados: '+e.message+'</div>';}
   document.getElementById('conc-loading').style.display='none';
